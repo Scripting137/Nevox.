@@ -80,6 +80,10 @@
         current_open; 
     }
 
+    local isMobile = uis.TouchEnabled and not uis.MouseEnabled
+    local mobileScale = isMobile and 0.8 or 1
+
+
     local themes = {
         preset = {
             accent = rgb(155, 150, 219),
@@ -206,6 +210,13 @@
 
 -- Library functions 
     -- Misc functions
+        function library:tween(obj, properties, easing_style, time) 
+            local tween = tween_service:Create(obj, TweenInfo.new(time or 0.25, easing_style or Enum.EasingStyle.Quint, Enum.EasingDirection.InOut, 0, false, 0), properties):Play()
+                
+            return tween
+        end
+
+
         function library:tween(obj, properties, easing_style, time) 
             local tween = tween_service:Create(obj, TweenInfo.new(time or 0.25, easing_style or Enum.EasingStyle.Quint, Enum.EasingDirection.InOut, 0, false, 0), properties):Play()
                 
@@ -499,7 +510,7 @@
                 suffix = properties.suffix or properties.Suffix or "tech";
                 name = properties.name or properties.Name or "nebula";
                 game_name = properties.gameInfo or properties.game_info or properties.GameInfo or "Milenium for Counter-Strike: Global Offensive";
-                size = properties.size or properties.Size or dim2(0, 700, 0, 565);
+                size = properties.size or properties.Size or dim2(0, 700 * mobileScale, 0, 565 * mobileScale);
                 selected_tab;
                 items = {};
 
@@ -577,7 +588,7 @@
                 
                 library:create( "UIListLayout" , {
                     Parent = items[ "button_holder" ];
-                    Padding = dim(0, 5);
+                    Padding = dim(0, 5 * mobileScale);
                     SortOrder = Enum.SortOrder.LayoutOrder
                 });
                 
@@ -602,7 +613,7 @@
                     TextColor3 = themes.preset.accent;
                     BorderSizePixel = 0;
                     RichText = true;
-                    TextSize = 30;
+                    TextSize = 30 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 }); library:apply_theme(items[ "title" ], "accent", "TextColor3");
                 
@@ -701,7 +712,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 }); 
                 
@@ -720,7 +731,7 @@
                     TextXAlignment = Enum.TextXAlignment.Right;
                     AutomaticSize = Enum.AutomaticSize.XY;
                     FontFace = fonts.font;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 }); library:apply_theme(items[ "other_info" ], "accent", "TextColor3");        
             end 
@@ -784,7 +795,7 @@
                         Name = "\0";
                         Size = dim2(1, 0, 0, 35);
                         BorderSizePixel = 0;
-                        TextSize = 16;
+                        TextSize = 16 * mobileScale;
                         BackgroundColor3 = rgb(29, 29, 29)
                     });
                     
@@ -815,7 +826,7 @@
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.X;
-                        TextSize = 16;
+                        TextSize = 16 * mobileScale;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -883,7 +894,7 @@
                                     ClipsDescendants = true;
                                     BorderSizePixel = 0;
                                     AutomaticSize = Enum.AutomaticSize.X;
-                                    TextSize = 16;
+                                    TextSize = 16 * mobileScale;
                                     BackgroundColor3 = rgb(25, 25, 29)
                                 });
                                 
@@ -899,7 +910,7 @@
                                     TextXAlignment = Enum.TextXAlignment.Left;
                                     BorderSizePixel = 0;
                                     AutomaticSize = Enum.AutomaticSize.XY;
-                                    TextSize = 16;
+                                    TextSize = 16 * mobileScale;
                                     BackgroundColor3 = rgb(255, 255, 255)
                                 });
                                 
@@ -1093,7 +1104,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0; 
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 16;
+                    TextSize = 16 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -1259,7 +1270,7 @@
                     Position = dim2(0, 1, 0, 1);
                     Size = dim2(1, -2, 0, 35);
                     BorderSizePixel = 0;
-                    TextSize = 16;
+                    TextSize = 16 * mobileScale;
                     BackgroundColor3 = rgb(19, 19, 21)
                 });
                 
@@ -1302,7 +1313,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.X;
-                    TextSize = 16;
+                    TextSize = 16 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -1329,7 +1340,7 @@
                         Position = dim2(1, -9, 0.5, 0);
                         Size = dim2(0, 36, 0, 18);
                         BorderSizePixel = 0;
-                        TextSize = 14;
+                        TextSize = 14 * mobileScale;
                         BackgroundColor3 = rgb(58, 58, 62)
                     });  library:apply_theme(items[ "toggle" ], "accent", "BackgroundColor3");
                     
@@ -1445,7 +1456,7 @@
                     Size = dim2(1, 0, 0, 0);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.Y;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -1461,7 +1472,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 16;
+                    TextSize = 16 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
 
@@ -1480,7 +1491,7 @@
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = 16;
+                        TextSize = 16 * mobileScale;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                 end 
@@ -1524,7 +1535,7 @@
                             Position = dim2(1, 0, 0, 0);
                             Size = dim2(0, 16, 0, 16);
                             BorderSizePixel = 0;
-                            TextSize = 14;
+                            TextSize = 14 * mobileScale;
                             BackgroundColor3 = rgb(67, 67, 68)
                         }); library:apply_theme(items[ "toggle_button" ], "accent", "BackgroundColor3");
                         
@@ -1580,7 +1591,7 @@
                             Position = dim2(1, -9, 0.5, 0);
                             Size = dim2(0, 36, 0, 18);
                             BorderSizePixel = 0;
-                            TextSize = 14;
+                            TextSize = 14 * mobileScale;
                             BackgroundColor3 = themes.preset.accent
                         }); library:apply_theme(items[ "toggle_button" ], "accent", "BackgroundColor3");
                         
@@ -1711,7 +1722,7 @@
                     Size = dim2(1, 0, 0, 0);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.Y;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -1727,7 +1738,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 16;
+                    TextSize = 16 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -1746,7 +1757,7 @@
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = 16;
+                        TextSize = 16 * mobileScale;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                 end 
@@ -1787,7 +1798,7 @@
                     Position = dim2(1, 0, 0, 0);
                     Size = dim2(1, -4, 0, 4);
                     BorderSizePixel = 0;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(33, 33, 35)
                 });
                 
@@ -1844,7 +1855,7 @@
                     TextXAlignment = Enum.TextXAlignment.Right;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 16;
+                    TextSize = 16 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -1941,7 +1952,7 @@
                         Size = dim2(1, 0, 0, 0);
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.Y;
-                        TextSize = 14;
+                        TextSize = 14 * mobileScale;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -1957,7 +1968,7 @@
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = 16;
+                        TextSize = 16 * mobileScale;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -1976,7 +1987,7 @@
                             TextXAlignment = Enum.TextXAlignment.Left;
                             BorderSizePixel = 0;
                             AutomaticSize = Enum.AutomaticSize.XY;
-                            TextSize = 16;
+                            TextSize = 16 * mobileScale;
                             BackgroundColor3 = rgb(255, 255, 255)
                         });
                     end 
@@ -2017,7 +2028,7 @@
                         Position = dim2(1, 0, 0, 0);
                         Size = dim2(0, cfg.width, 0, 16);
                         BorderSizePixel = 0;
-                        TextSize = 14;
+                        TextSize = 14 * mobileScale;
                         BackgroundColor3 = rgb(33, 33, 35)
                     });
                     
@@ -2039,7 +2050,7 @@
                         TextXAlignment = Enum.TextXAlignment.Left;
                         TextTruncate = Enum.TextTruncate.AtEnd;
                         AutomaticSize = Enum.AutomaticSize.Y;
-                        TextSize = 14;
+                        TextSize = 14 * mobileScale;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -2097,7 +2108,7 @@
                     
                     library:create( "UIListLayout" , {
                         Parent = items[ "outline" ];
-                        Padding = dim(0, 5);
+                        Padding = dim(0, 5 * mobileScale);
                         SortOrder = Enum.SortOrder.LayoutOrder
                     });
                     
@@ -2121,7 +2132,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.Y;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255);
                     ZIndex = 10;
                 }); library:apply_theme(button, "accent", "TextColor3");
@@ -2250,7 +2261,7 @@
                     Size = dim2(1, 0, 0, 0);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.Y;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -2266,7 +2277,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 16;
+                    TextSize = 16 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
 
@@ -2285,7 +2296,7 @@
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = 16;
+                        TextSize = 16 * mobileScale;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                 end 
@@ -2373,7 +2384,7 @@
                         Position = dim2(1, 0, 0, 0);
                         Size = dim2(0, 16, 0, 16);
                         BorderSizePixel = 0;
-                        TextSize = 14;
+                        TextSize = 14 * mobileScale;
                         BackgroundColor3 = rgb(54, 31, 184)
                     });
                     
@@ -2661,7 +2672,7 @@
                         PlaceholderColor3 = rgb(255, 255, 255);
                         CursorPosition = -1;
                         ClearTextOnFocus = false;
-                        TextSize = 14;
+                        TextSize = 14 * mobileScale;
                         BackgroundColor3 = rgb(255, 255, 255);
                         TextColor3 = rgb(72, 72, 72);
                         BorderColor3 = rgb(0, 0, 0);
@@ -2836,7 +2847,7 @@
                     Size = dim2(1, 0, 0, 0);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.Y;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -2852,7 +2863,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 16;
+                    TextSize = 16 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -2890,7 +2901,7 @@
                     PlaceholderColor3 = rgb(255, 255, 255);
                     CursorPosition = -1;
                     ClearTextOnFocus = false;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255);
                     TextColor3 = rgb(72, 72, 72);
                     BorderColor3 = rgb(0, 0, 0);
@@ -2977,7 +2988,7 @@
                         Size = dim2(1, 0, 0, 0);
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.Y;
-                        TextSize = 14;
+                        TextSize = 14 * mobileScale;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -2993,7 +3004,7 @@
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = 16;
+                        TextSize = 16 * mobileScale;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -3034,7 +3045,7 @@
                         Position = dim2(1, 0, 0, 0);
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.X;
-                        TextSize = 14;
+                        TextSize = 14 * mobileScale;
                         BackgroundColor3 = rgb(33, 33, 35)
                     });
                     
@@ -3055,7 +3066,7 @@
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = 14;
+                        TextSize = 14 * mobileScale;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -3099,7 +3110,7 @@
                     
                     library:create( "UIListLayout" , {
                         Parent = items[ "inline" ];
-                        Padding = dim(0, 5);
+                        Padding = dim(0, 5 * mobileScale);
                         SortOrder = Enum.SortOrder.LayoutOrder
                     });
                     
@@ -3124,7 +3135,7 @@
                             TextXAlignment = Enum.TextXAlignment.Left;
                             BorderSizePixel = 0;
                             AutomaticSize = Enum.AutomaticSize.XY;
-                            TextSize = 14;
+                            TextSize = 14 * mobileScale;
                             BackgroundColor3 = rgb(255, 255, 255)
                         }); cfg.hold_instances[option] = name
                         library:apply_theme(name, "accent", "TextColor3")
@@ -3307,7 +3318,7 @@
                     Position = dim2(1, -4, 0, 0);
                     Size = dim2(1, -8, 0, 30);
                     BorderSizePixel = 0;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(33, 33, 35)
                 });
                 
@@ -3327,7 +3338,7 @@
                     Size = dim2(1, 0, 1, 0);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 }); library:apply_theme(items[ "name" ], "accent", "BackgroundColor3");                            
             end 
@@ -3490,7 +3501,7 @@
                         Position = dim2(1, 0, 0, 0);
                         Size = dim2(1, 0, 0, 30);
                         BorderSizePixel = 0;
-                        TextSize = 14;
+                        TextSize = 14 * mobileScale;
                         BackgroundColor3 = rgb(33, 33, 35)
                     }); cfg.data_store[#cfg.data_store + 1] = button;
 
@@ -3505,7 +3516,7 @@
                         Size = dim2(1, 0, 1, 0);
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = 14;
+                        TextSize = 14 * mobileScale;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -3615,7 +3626,7 @@
             local items = cfg.items; do 
                 items[ "notification" ] = library:create( "Frame" , {
                     Parent = library[ "items" ];
-                    Size = dim2(0, 210, 0, 53);
+            Size = dim2(0, 210 * mobileScale, 0, 53 * mobileScale);
                     Name = "\0";
                     BorderColor3 = rgb(0, 0, 0);
                     BorderSizePixel = 0;
@@ -3643,7 +3654,7 @@
                     Position = dim2(0, 7, 0, 6);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -3665,7 +3676,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     TextWrapped = true;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = 14;
+                    TextSize = 14 * mobileScale;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
