@@ -798,51 +798,63 @@
                 -- Make draggable
                 local dragging = false
                 local dragStart, frameStart
+                local tapStartTime = 0
+                local tapStartPos
                 
                 mobileButton.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.Touch then
                         dragging = true
                         dragStart = input.Position
                         frameStart = mobileButton.Position
+                        tapStartTime = tick()
+                        tapStartPos = input.Position
                     end
                 end)
                 
                 uis.InputChanged:Connect(function(input)
                     if dragging and input.UserInputType == Enum.UserInputType.Touch then
                         local delta = input.Position - dragStart
-                        local newPos = dim2(
-                            frameStart.X.Scale,
-                            frameStart.X.Offset + delta.X,
-                            frameStart.Y.Scale,
-                            frameStart.Y.Offset + delta.Y
-                        )
                         
-                        -- Keep on screen
-                        local maxX = camera.ViewportSize.X - mobileButton.AbsoluteSize.X
-                        local maxY = camera.ViewportSize.Y - mobileButton.AbsoluteSize.Y
-                        
-                        newPos = dim2(
-                            0,
-                            math.clamp(newPos.X.Offset, 0, maxX),
-                            0,
-                            math.clamp(newPos.Y.Offset, 0, maxY)
-                        )
-                        
-                        mobileButton.Position = newPos
+                        -- Only start dragging if moved more than 5 pixels (prevents accidental drags)
+                        if delta.Magnitude > 5 then
+                            local newPos = dim2(
+                                frameStart.X.Scale,
+                                frameStart.X.Offset + delta.X,
+                                frameStart.Y.Scale,
+                                frameStart.Y.Offset + delta.Y
+                            )
+                            
+                            -- Keep on screen
+                            local maxX = camera.ViewportSize.X - mobileButton.AbsoluteSize.X
+                            local maxY = camera.ViewportSize.Y - mobileButton.AbsoluteSize.Y
+                            
+                            newPos = dim2(
+                                0,
+                                math.clamp(newPos.X.Offset, 0, maxX),
+                                0,
+                                math.clamp(newPos.Y.Offset, 0, maxY)
+                            )
+                            
+                            mobileButton.Position = newPos
+                        end
                     end
                 end)
                 
-                uis.InputEnded:Connect(function(input)
+                mobileButton.InputEnded:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.Touch then
-                        if dragging then
-                            dragging = false
-                        else
+                        local tapDuration = tick() - tapStartTime
+                        local tapDistance = tapStartPos and (input.Position - tapStartPos).Magnitude or 0
+                        
+                        -- Only toggle if it was a short tap (<0.3s) and didn't drag much (<10 pixels)
+                        if tapDuration < 0.3 and tapDistance < 10 then
                             -- Toggle menu
                             library["items"].Enabled = not library["items"].Enabled
                             
                             -- Hide button when menu open, show when closed
                             mobileButton.Visible = not library["items"].Enabled
                         end
+                        
+                        dragging = false
                     end
                 end)
                 
@@ -854,7 +866,8 @@
                 library["items"].Enabled = true
             end
             
-            return setmetatable(cfg, library)        end 
+            return setmetatable(cfg, library) 
+end 
 
         function library:tab(properties)
             local cfg = {
