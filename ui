@@ -81,7 +81,7 @@
     }
 
     local isMobile = uis.TouchEnabled and not uis.MouseEnabled
-    local mobileScale = isMobile and 0.8 or 1
+    local mobileScale = isMobile and 0.6 or 1
 
 
     local themes = {
@@ -302,13 +302,14 @@
             return (y_cond and x_cond)
         end
 
-        function library:draggify(frame)
+            function library:draggify(frame)
             local dragging = false 
             local start_size = frame.Position
             local start 
 
             frame.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+                   input.UserInputType == Enum.UserInputType.Touch then
                     dragging = true
                     start = input.Position
                     start_size = frame.Position
@@ -316,13 +317,15 @@
             end)
 
             frame.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+                   input.UserInputType == Enum.UserInputType.Touch then
                     dragging = false
                 end
             end)
 
             library:connection(uis.InputChanged, function(input, game_event) 
-                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+                   input.UserInputType == Enum.UserInputType.Touch) then
                     local viewport_x = camera.ViewportSize.X
                     local viewport_y = camera.ViewportSize.Y
 
@@ -346,7 +349,6 @@
                 end
             end)
         end 
-
         function library:convert(str)
             local values = {}
 
@@ -754,12 +756,12 @@
                 library[ "items" ].Enabled = bool
             end 
                 
-            -- Mobile toggle button
+                     -- Mobile toggle button
             if isMobile then
                 -- Create mobile toggle button
                 local mobileButton = library:create("TextButton", {
                     Name = "MobileToggleButton",
-                    Parent = library["items"],
+                    Parent = coregui,
                     Position = dim2(0, 20 * mobileScale, 1, -80 * mobileScale),
                     Size = dim2(0, 60 * mobileScale, 0, 60 * mobileScale),
                     BackgroundColor3 = rgb(14, 14, 16),
@@ -768,7 +770,8 @@
                     Text = "",
                     AutoButtonColor = false,
                     ZIndex = 1000,
-                    Visible = true
+                    Visible = true,
+                    Active = true
                 })
                 
                 library:create("UICorner", {
@@ -782,7 +785,7 @@
                     Thickness = 2 * mobileScale
                 })
                 
-                -- Menu icon
+                -- Menu icon (hamburger icon)
                 local mobileIcon = library:create("ImageLabel", {
                     Name = "MobileToggleIcon",
                     Parent = mobileButton,
@@ -795,78 +798,83 @@
                     ZIndex = 1001
                 })
                 
-                -- Make draggable
-                local dragging = false
-                local dragStart, frameStart
-                local tapStartTime = 0
-                local tapStartPos
+                -- Button functionality
+                local buttonDragging = false
+                local buttonStartPos
+                local buttonStartFramePos
                 
                 mobileButton.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = true
-                        dragStart = input.Position
-                        frameStart = mobileButton.Position
-                        tapStartTime = tick()
-                        tapStartPos = input.Position
-                    end
-                end)
-                
-                uis.InputChanged:Connect(function(input)
-                    if dragging and input.UserInputType == Enum.UserInputType.Touch then
-                        local delta = input.Position - dragStart
-                        
-                        -- Only start dragging if moved more than 5 pixels (prevents accidental drags)
-                        if delta.Magnitude > 5 then
-                            local newPos = dim2(
-                                frameStart.X.Scale,
-                                frameStart.X.Offset + delta.X,
-                                frameStart.Y.Scale,
-                                frameStart.Y.Offset + delta.Y
-                            )
-                            
-                            -- Keep on screen
-                            local maxX = camera.ViewportSize.X - mobileButton.AbsoluteSize.X
-                            local maxY = camera.ViewportSize.Y - mobileButton.AbsoluteSize.Y
-                            
-                            newPos = dim2(
-                                0,
-                                math.clamp(newPos.X.Offset, 0, maxX),
-                                0,
-                                math.clamp(newPos.Y.Offset, 0, maxY)
-                            )
-                            
-                            mobileButton.Position = newPos
-                        end
+                        buttonDragging = true
+                        buttonStartPos = input.Position
+                        buttonStartFramePos = mobileButton.Position
                     end
                 end)
                 
                 mobileButton.InputEnded:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.Touch then
-                        local tapDuration = tick() - tapStartTime
-                        local tapDistance = tapStartPos and (input.Position - tapStartPos).Magnitude or 0
-                        
-                        -- Only toggle if it was a short tap (<0.3s) and didn't drag much (<10 pixels)
-                        if tapDuration < 0.3 and tapDistance < 10 then
-                            -- Toggle menu
-                            library["items"].Enabled = not library["items"].Enabled
+                        if buttonDragging then
+                            -- Check if it was a drag or a tap
+                            local endPos = input.Position
+                            local dragDistance = (endPos - buttonStartPos).Magnitude
                             
-                            -- Hide button when menu open, show when closed
-                            mobileButton.Visible = not library["items"].Enabled
+                            -- If dragged less than 10 pixels, count as tap
+                            if dragDistance < 10 then
+                                -- Toggle menu
+                                local menuVisible = not library["items"].Enabled
+                                library["items"].Enabled = menuVisible
+                                
+                                -- Update button visibility
+                                mobileButton.Visible = not menuVisible
+                            end
                         end
+                        buttonDragging = false
+                    end
+                end)
+                
+                -- Make button draggable
+                library:connection(uis.InputChanged, function(input, game_event)
+                    if buttonDragging and input.UserInputType == Enum.UserInputType.Touch then
+                        local currentPos = input.Position
+                        local delta = currentPos - buttonStartPos
                         
-                        dragging = false
+                        local newPos = dim2(
+                            buttonStartFramePos.X.Scale,
+                            buttonStartFramePos.X.Offset + delta.X,
+                            buttonStartFramePos.Y.Scale,
+                            buttonStartFramePos.Y.Offset + delta.Y
+                        )
+                        
+                        -- Keep button on screen
+                        local maxX = camera.ViewportSize.X - mobileButton.AbsoluteSize.X
+                        local maxY = camera.ViewportSize.Y - mobileButton.AbsoluteSize.Y
+                        
+                        newPos = dim2(
+                            0,
+                            math.clamp(newPos.X.Offset, 0, maxX),
+                            0,
+                            math.clamp(newPos.Y.Offset, 0, maxY)
+                        )
+                        
+                        mobileButton.Position = newPos
                     end
                 end)
                 
                 -- Start with menu closed on mobile
                 library["items"].Enabled = false
                 mobileButton.Visible = true
+                
+                -- Make sure button is always on top
+                run.RenderStepped:Connect(function()
+                    mobileButton.ZIndex = 1000
+                    mobileIcon.ZIndex = 1001
+                end)
             else
                 -- Desktop: start with menu open
                 library["items"].Enabled = true
             end
             
-            return setmetatable(cfg, library) 
+            return setmetatable(cfg, library)
 end 
 
         function library:tab(properties)
