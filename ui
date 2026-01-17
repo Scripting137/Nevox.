@@ -5165,6 +5165,25 @@ Library.Window = function(self, Data)
         Position = UDim2New(0, Camera.ViewportSize.X / 3.3, 0, Camera.ViewportSize.Y / 3.3),
         Size = Window.Size
     }) do
+        -- Scale window size for PC
+        if isPC then
+            Items["Window"].Instance.Size = UDim2New(
+                Items["Window"].Instance.Size.X.Scale, 
+                Items["Window"].Instance.Size.X.Offset * uiScaleFactor, 
+                Items["Window"].Instance.Size.Y.Scale, 
+                Items["Window"].Instance.Size.Y.Offset * uiScaleFactor
+            )
+        end
+        
+        Items["Side"] = Instances:Create("Frame", {
+            Parent = Items["Window"].Instance,
+            Name = "\0",
+            Position = UDim2New(0, 12, 0, 12),
+            BorderColor3 = FromRGB(42, 49, 45),
+            Size = UDim2New(0, 200, 1, -24),
+            BorderSizePixel = 2,
+            BackgroundColor3 = FromRGB(20, 24, 21)
+        })  Items["Side"]:AddToTheme({BackgroundColor3 = "Inline", BorderColor3 = "Outline"})
             Items["Side"] = Instances:Create("Frame", {
                 Parent = Items["Window"].Instance,
                 Name = "\0",
@@ -5438,26 +5457,35 @@ end)
             NewTween.Tween.Completed:Connect(function()
                 Debounce = false 
                 Items["Window"].Instance.Visible = Window.IsOpen
-if Window.IsOpen then
-    if not isMobile then
-        Items["MouseBackground"].Instance.Visible = true
-        UserInputService.MouseIconEnabled = false
-    end
-else
-    if not isMobile then
-        Items["MouseBackground"].Instance.Visible = false
-        UserInputService.MouseIconEnabled = true
-    end
-end
+                if Window.IsOpen then
+                    if not isMobile then
+                        Items["MouseBackground"].Instance.Visible = true
+                        UserInputService.MouseIconEnabled = false
+                    end
+                else
+                    if not isMobile then
+                        Items["MouseBackground"].Instance.Visible = false
+                        UserInputService.MouseIconEnabled = true
+                    end
+                end
             end)
         end
+
+        Window.MobileToggleButton = MobileToggleButton
+        
+        -- Hide default cursor on mobile
+        if isMobile then
+            UserInputService.MouseIconEnabled = true
+            Items["MouseBackground"].Instance.Visible = false
+        end
+
+        Window:SetOpen(true)
 
         Library:Connect(UserInputService.InputBegan, function(Input)
             if tostring(Input.KeyCode) == Library.MenuKeybind or tostring(Input.UserInputType) == Library.MenuKeybind then
                 Window:SetOpen(not Window.IsOpen)
             end
-        end)
-
+        end) 
         local SearchStepped
 
         Items["Input"]:Connect("Focused", function()
