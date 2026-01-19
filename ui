@@ -8,6 +8,7 @@
     - Draggable area increased for mobile touch
     - Toggle button for mobile visibility
     - Touch-friendly controls
+    - Proper scaling for all devices
 ]]
 
 -- Variables 
@@ -297,16 +298,16 @@
 
         function library:draggify(frame, drag_button)
             local dragging = false 
-            local start_size = frame.Position
-            local start 
+            local start_pos
+            local frame_start_pos
 
             drag_button = drag_button or frame
             
             drag_button.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     dragging = true
-                    start = input.Position
-                    start_size = frame.Position
+                    start_pos = input.Position
+                    frame_start_pos = frame.Position
                 end
             end)
 
@@ -318,25 +319,15 @@
 
             library:connection(uis.InputChanged, function(input, game_event) 
                 if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                    local viewport_x = camera.ViewportSize.X
-                    local viewport_y = camera.ViewportSize.Y
-
-                    local current_position = dim2(
-                        0,
-                        clamp(
-                            start_size.X.Offset + (input.Position.X - start.X),
-                            0,
-                            viewport_x - frame.Size.X.Offset
-                        ),
-                        0,
-                        math.clamp(
-                            start_size.Y.Offset + (input.Position.Y - start.Y),
-                            0,
-                            viewport_y - frame.Size.Y.Offset
-                        )
+                    local delta = input.Position - start_pos
+                    local new_position = dim2(
+                        frame_start_pos.X.Scale,
+                        frame_start_pos.X.Offset + delta.X,
+                        frame_start_pos.Y.Scale,
+                        frame_start_pos.Y.Offset + delta.Y
                     )
 
-                    library:tween(frame, {Position = current_position}, Enum.EasingStyle.Linear, 0.05)
+                    frame.Position = new_position
                     library:close_element()
                 end
             end)
@@ -511,6 +502,7 @@
                 is_mobile = uis.TouchEnabled;
                 mobile_toggle_visible = false;
                 tween;
+                floating_button = nil; -- Store reference to floating button
             }
             
             library[ "items" ] = library:create( "ScreenGui" , {
@@ -551,7 +543,7 @@
                     library:create("UIScale", {
                         Parent = items[ "main" ];
                         Name = "\0";
-                        Scale = 0.8 -- Scale everything to 80% on mobile
+                        Scale = 0.7 -- Scale everything down to 70% on mobile
                     })
                 end
                 
@@ -571,7 +563,7 @@
                     BackgroundTransparency = 1;
                     Name = "\0";
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(0, 150, 1, -20);
+                    Size = dim2(0, 140, 1, -20);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(14, 14, 16)
                 });
@@ -632,9 +624,9 @@
                     Parent = items[ "main" ];
                     Name = "\0";
                     BackgroundTransparency = 1;
-                    Position = dim2(0, 150, 0, 0);
+                    Position = dim2(0, 140, 0, 0);
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(1, -150, 0, 45);
+                    Size = dim2(1, -140, 0, 45);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(255, 255, 255)
                 }); cfg.multi_holder = items[ "multi_holder" ];
@@ -671,9 +663,9 @@
                     Parent = items[ "main" ];
                     Name = "\0";
                     BackgroundTransparency = 1;
-                    Position = dim2(0, 150, 0, 45);
+                    Position = dim2(0, 140, 0, 45);
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(1, -150, 1, -65);
+                    Size = dim2(1, -140, 1, -65);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(14, 14, 16);
                     ZIndex = 2;
@@ -745,110 +737,128 @@
                     TextSize = 12;
                     BackgroundColor3 = rgb(255, 255, 255)
                 }); library:apply_theme(items[ "other_info" ], "accent", "TextColor3");
-                
-                -- Floating toggle button for mobile
-                if cfg.is_mobile then
-                    items[ "floating_button" ] = library:create( "TextButton" , {
-                        FontFace = fonts.font;
-                        TextColor3 = rgb(255, 255, 255);
-                        BorderColor3 = rgb(0, 0, 0);
-                        Text = "";
-                        AutoButtonColor = false;
-                        Parent = library[ "items" ];
-                        Name = "\0";
-                        Position = dim2(0.5, -25, 0, 20);
-                        AnchorPoint = vec2(0.5, 0);
-                        Visible = true;
-                        BorderColor3 = rgb(0, 0, 0);
-                        Size = dim2(0, 50, 0, 50);
-                        BorderSizePixel = 0;
-                        BackgroundTransparency = 0.5;
-                        ZIndex = 127;
-                        BackgroundColor3 = rgb(25, 25, 29)
-                    });
-                    
-                    library:create( "UICorner" , {
-                        Parent = items[ "floating_button" ];
-                        CornerRadius = dim(1, 0)
-                    });
-                    
-                    library:create( "UIStroke" , {
-                        Color = rgb(35, 35, 40);
-                        Parent = items[ "floating_button" ];
-                        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                    });
-                    
-                    -- Floating button logo
-                    items[ "floating_logo" ] = library:create( "ImageLabel" , {
-                        BorderColor3 = rgb(0, 0, 0);
-                        Parent = items[ "floating_button" ];
-                        Name = "\0";
-                        Image = "rbxassetid://6034767608"; -- Default icon
-                        BackgroundTransparency = 1;
-                        AnchorPoint = vec2(0.5, 0.5);
-                        Position = dim2(0.5, 0, 0.5, 0);
-                        ZIndex = 127;
-                        Size = dim2(1, -25, 1, -25);
-                        BorderSizePixel = 0;
-                        BackgroundColor3 = rgb(255, 255, 255)
-                    });
-                end
             end 
 
             do -- Other
                 library:draggify(items[ "main" ])
                 library:resizify(items[ "main" ])
-                
-                -- Floating button click handler
-                if cfg.is_mobile then
-                    items[ "floating_button" ].MouseButton1Click:Connect(function()
-                        cfg.toggle_menu(not library[ "items" ].Enabled)
-                    end)
-                    
-                    -- Make floating button draggable
-                    local floating_dragging = false
-                    local floating_start_pos
-                    local floating_frame_start_pos
-                    
-                    items[ "floating_button" ].InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                            floating_dragging = true
-                            floating_start_pos = input.Position
-                            floating_frame_start_pos = items[ "floating_button" ].Position
-                        end
-                    end)
-
-                    items[ "floating_button" ].InputEnded:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                            floating_dragging = false
-                        end
-                    end)
-
-                    library:connection(uis.InputChanged, function(input, game_event) 
-                        if floating_dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                            local delta = input.Position - floating_start_pos
-                            local new_position = dim2(
-                                floating_frame_start_pos.X.Scale,
-                                floating_frame_start_pos.X.Offset + delta.X,
-                                floating_frame_start_pos.Y.Scale,
-                                floating_frame_start_pos.Y.Offset + delta.Y
-                            )
-
-                            items[ "floating_button" ].Position = new_position
-                        end
-                    end)
-                end
             end 
+
+            -- Mobile Floating Toggle Button - Create AFTER main items are created
+            if cfg.is_mobile then
+                -- Create separate GUI for floating button
+                local mobile_gui = library:create("ScreenGui", {
+                    Parent = coregui,
+                    Name = "MobileFloatingButton",
+                    Enabled = true,
+                    ZIndexBehavior = Enum.ZIndexBehavior.Global,
+                    IgnoreGuiInset = true,
+                })
+                
+                -- Store reference to floating button
+                cfg.floating_button = library:create("TextButton", {
+                    Parent = mobile_gui,
+                    Text = "",
+                    AutoButtonColor = false,
+                    Name = "FloatingButton",
+                    Position = dim2(0.5, -27.5, 0, 20),
+                    AnchorPoint = vec2(0.5, 0),
+                    Visible = true,
+                    BorderColor3 = rgb(0, 0, 0),
+                    Size = dim2(0, 55, 0, 55),
+                    BorderSizePixel = 0,
+                    BackgroundTransparency = 0.2,
+                    ZIndex = 127,
+                    BackgroundColor3 = rgb(14, 14, 16)
+                })
+                
+                library:create("UICorner", {
+                    Parent = cfg.floating_button,
+                    CornerRadius = dim(1, 0)
+                })
+                
+                library:create("UIStroke", {
+                    Color = rgb(23, 23, 29),
+                    Parent = cfg.floating_button,
+                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+                })
+                
+                -- Floating button icon
+                local floating_logo = library:create("ImageLabel", {
+                    Parent = cfg.floating_button,
+                    BorderColor3 = rgb(0, 0, 0),
+                    Name = "FloatingLogo",
+                    Image = "rbxassetid://119270312720784",
+                    BackgroundTransparency = 1,
+                    AnchorPoint = vec2(0.5, 0.5),
+                    Position = dim2(0.5, 0, 0.5, 0),
+                    ZIndex = 128,
+                    Size = dim2(0, 32, 0, 32),
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = rgb(255, 255, 255)
+                })
+                
+                -- Make floating button draggable
+                local floating_dragging = false
+                local floating_start_pos
+                local floating_frame_start_pos
+                local last_click_time = 0
+                
+                cfg.floating_button.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        floating_dragging = true
+                        floating_start_pos = input.Position
+                        floating_frame_start_pos = cfg.floating_button.Position
+                        
+                        -- Visual feedback on press
+                        library:tween(cfg.floating_button, {BackgroundTransparency = 0.1}, Enum.EasingStyle.Quad, 0.1)
+                    end
+                end)
+
+                cfg.floating_button.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        floating_dragging = false
+                        library:tween(cfg.floating_button, {BackgroundTransparency = 0.2}, Enum.EasingStyle.Quad, 0.1)
+                        
+                        -- Check if it was a click (not a drag)
+                        local delta = input.Position - floating_start_pos
+                        local current_time = tick()
+                        
+                        if delta.Magnitude < 10 then
+                            -- Simple click - toggle menu
+                            local is_double_click = (current_time - last_click_time) < 0.3
+                            last_click_time = current_time
+                            
+                            if not is_double_click then
+                                cfg.toggle_menu(not library["items"].Enabled)
+                            end
+                        end
+                    end
+                end)
+
+                library:connection(uis.InputChanged, function(input, game_event) 
+                    if floating_dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                        local delta = input.Position - floating_start_pos
+                        local new_position = dim2(
+                            floating_frame_start_pos.X.Scale,
+                            floating_frame_start_pos.X.Offset + delta.X,
+                            floating_frame_start_pos.Y.Scale,
+                            floating_frame_start_pos.Y.Offset + delta.Y
+                        )
+
+                        cfg.floating_button.Position = new_position
+                    end
+                end)
+                
+                -- Store reference to logo for visual feedback
+                cfg.floating_logo = floating_logo
+            end
 
             function cfg.toggle_menu(bool) 
                 library[ "items" ].Enabled = bool
-                if cfg.is_mobile then
-                    items[ "floating_button" ].Visible = not bool
-                    if bool then
-                        library:tween(items[ "floating_logo" ], {ImageColor3 = themes.preset.accent}, Enum.EasingStyle.Quad, 0.2)
-                    else
-                        library:tween(items[ "floating_logo" ], {ImageColor3 = rgb(255, 255, 255)}, Enum.EasingStyle.Quad, 0.2)
-                    end
+                if cfg.is_mobile and cfg.floating_logo then
+                    -- Visual feedback when toggling
+                    library:tween(cfg.floating_logo, {ImageColor3 = bool and themes.preset.accent or rgb(255, 255, 255)}, Enum.EasingStyle.Quad, 0.2)
                 end
             end 
                 
@@ -874,9 +884,9 @@
                     Name = "\0";
                     Visible = false;
                     BackgroundTransparency = 1;
-                    Position = dim2(0, 150, 0, 45);
+                    Position = dim2(0, 140, 0, 45);
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(1, -165, 1, -85);
+                    Size = dim2(1, -160, 1, -85);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
@@ -902,7 +912,7 @@
                         BorderColor3 = rgb(0, 0, 0);
                         Parent = items[ "button" ];
                         AnchorPoint = vec2(0, 0.5);
-                        Image = cfg.icon;
+                        Image = "http://www.roblox.com/asset/?id=6034767608";
                         BackgroundTransparency = 1;
                         Position = dim2(0, 8, 0.5, 0);
                         Name = "\0";
@@ -1136,7 +1146,7 @@
                         self.items[ "global_fade" ].BackgroundTransparency = 0
                         
                         library:tween(self.items[ "global_fade" ], {BackgroundTransparency = 1}, Enum.EasingStyle.Quad, 0.4)
-                        selected_tab[ 4 ].Size = dim2(1, -165, 1, -85)
+                        selected_tab[ 4 ].Size = dim2(1, -160, 1, -85)
                     end
 
                     library:tween(selected_tab[ 1 ], {BackgroundTransparency = 1})
@@ -1152,7 +1162,7 @@
                 library:tween(items[ "button" ], {BackgroundTransparency = 0})
                 library:tween(items[ "icon" ], {ImageColor3 = themes.preset.accent})
                 library:tween(items[ "name" ], {TextColor3 = rgb(255, 255, 255)})
-                library:tween(items[ "tab_holder" ], {Size = dim2(1, -150, 1, -65)}, Enum.EasingStyle.Quad, 0.4)
+                library:tween(items[ "tab_holder" ], {Size = dim2(1, -140, 1, -65)}, Enum.EasingStyle.Quad, 0.4)
                 
                 items[ "tab_holder" ].Visible = true 
                 items[ "tab_holder" ].Parent = self.items[ "main" ]
