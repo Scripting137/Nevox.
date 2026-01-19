@@ -1,5 +1,4 @@
 --[[
-
     Milenium Library
     -> Made by @finobe 
     -> Kind of got bored idk what to do with life
@@ -502,12 +501,13 @@
                 is_mobile = uis.TouchEnabled;
                 mobile_toggle_visible = false;
                 tween;
+                floating_button = nil; -- Store reference to floating button
             }
             
             library[ "items" ] = library:create( "ScreenGui" , {
                 Parent = coregui;
                 Name = "\0";
-                Enabled = true;
+                Enabled = false;
                 ZIndexBehavior = Enum.ZIndexBehavior.Global;
                 IgnoreGuiInset = true;
             });
@@ -734,69 +734,122 @@
                 library:resizify(items[ "main" ])
             end 
 
-            -- Mobile Floating Toggle Button
+            -- Mobile Floating Toggle Button - Create AFTER main items are created
             if cfg.is_mobile then
-                items[ "floating_button" ] = library:create( "TextButton" , {
+                -- Create separate GUI for floating button
+                local mobile_gui = library:create("ScreenGui", {
                     Parent = coregui,
+                    Name = "MobileFloatingButton",
+                    Enabled = true,
+                    ZIndexBehavior = Enum.ZIndexBehavior.Global,
+                    IgnoreGuiInset = true,
+                })
+                
+                -- Store reference to floating button
+                cfg.floating_button = library:create("TextButton", {
+                    Parent = mobile_gui,
                     Text = "",
                     AutoButtonColor = false,
-                    Name = "\0",
-                    Position = dim2(0.5, -25, 0, 20),
+                    Name = "FloatingButton",
+                    Position = dim2(0.5, -27.5, 0, 20),
                     AnchorPoint = vec2(0.5, 0),
                     Visible = true,
                     BorderColor3 = rgb(0, 0, 0),
-                    Size = dim2(0, 50, 0, 50),
+                    Size = dim2(0, 55, 0, 55),
                     BorderSizePixel = 0,
-                    BackgroundTransparency = 0.5,
+                    BackgroundTransparency = 0.2,
                     ZIndex = 127,
                     BackgroundColor3 = rgb(14, 14, 16)
                 })
                 
-                library:create( "UICorner" , {
-                    Parent = items[ "floating_button" ],
+                library:create("UICorner", {
+                    Parent = cfg.floating_button,
                     CornerRadius = dim(1, 0)
                 })
                 
-                library:create( "UIStroke" , {
+                library:create("UIStroke", {
                     Color = rgb(23, 23, 29),
-                    Parent = items[ "floating_button" ],
+                    Parent = cfg.floating_button,
                     ApplyStrokeMode = Enum.ApplyStrokeMode.Border
                 })
                 
                 -- Floating button icon
-                items[ "floating_logo" ] = library:create( "ImageLabel" , {
-                    Parent = items[ "floating_button" ],
+                local floating_logo = library:create("ImageLabel", {
+                    Parent = cfg.floating_button,
                     BorderColor3 = rgb(0, 0, 0),
-                    Name = "\0",
-                    Image = "rbxassetid://6034767608",
+                    Name = "FloatingLogo",
+                    Image = "rbxassetid://119270312720784",
                     BackgroundTransparency = 1,
                     AnchorPoint = vec2(0.5, 0.5),
                     Position = dim2(0.5, 0, 0.5, 0),
-                    ZIndex = 127,
-                    Size = dim2(1, -25, 1, -25),
+                    ZIndex = 128,
+                    Size = dim2(0, 32, 0, 32),
                     BorderSizePixel = 0,
                     BackgroundColor3 = rgb(255, 255, 255)
                 })
                 
-                library:create( "UIGradient" , {
-                    Parent = items[ "floating_logo" ],
-                    Name = "\0",
-                    Enabled = true,
-                    Rotation = -115,
-                    Color = rgbseq{rgbkey(0, rgb(255, 255, 255)), rgbkey(1, rgb(143, 143, 143))}
-                })
-                
                 -- Make floating button draggable
-                library:draggify(items[ "floating_button" ])
+                local floating_dragging = false
+                local floating_start_pos
+                local floating_frame_start_pos
+                local last_click_time = 0
                 
-                -- Toggle menu on floating button click
-                items[ "floating_button" ].MouseButton1Click:Connect(function()
-                    cfg.toggle_menu(not library[ "items" ].Enabled)
+                cfg.floating_button.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        floating_dragging = true
+                        floating_start_pos = input.Position
+                        floating_frame_start_pos = cfg.floating_button.Position
+                        
+                        -- Visual feedback on press
+                        library:tween(cfg.floating_button, {BackgroundTransparency = 0.1}, Enum.EasingStyle.Quad, 0.1)
+                    end
                 end)
+
+                cfg.floating_button.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        floating_dragging = false
+                        library:tween(cfg.floating_button, {BackgroundTransparency = 0.2}, Enum.EasingStyle.Quad, 0.1)
+                        
+                        -- Check if it was a click (not a drag)
+                        local delta = input.Position - floating_start_pos
+                        local current_time = tick()
+                        
+                        if delta.Magnitude < 10 then
+                            -- Simple click - toggle menu
+                            local is_double_click = (current_time - last_click_time) < 0.3
+                            last_click_time = current_time
+                            
+                            if not is_double_click then
+                                cfg.toggle_menu(not library["items"].Enabled)
+                            end
+                        end
+                    end
+                end)
+
+                library:connection(uis.InputChanged, function(input, game_event) 
+                    if floating_dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                        local delta = input.Position - floating_start_pos
+                        local new_position = dim2(
+                            floating_frame_start_pos.X.Scale,
+                            floating_frame_start_pos.X.Offset + delta.X,
+                            floating_frame_start_pos.Y.Scale,
+                            floating_frame_start_pos.Y.Offset + delta.Y
+                        )
+
+                        cfg.floating_button.Position = new_position
+                    end
+                end)
+                
+                -- Store reference to logo for visual feedback
+                cfg.floating_logo = floating_logo
             end
 
             function cfg.toggle_menu(bool) 
                 library[ "items" ].Enabled = bool
+                if cfg.is_mobile and cfg.floating_logo then
+                    -- Visual feedback when toggling
+                    library:tween(cfg.floating_logo, {ImageColor3 = bool and themes.preset.accent or rgb(255, 255, 255)}, Enum.EasingStyle.Quad, 0.2)
+                end
             end 
                 
             return setmetatable(cfg, library)
