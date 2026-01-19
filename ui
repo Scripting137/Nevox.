@@ -298,16 +298,16 @@
 
         function library:draggify(frame, drag_button)
             local dragging = false 
-            local start_size = frame.Position
-            local start 
+            local start_pos
+            local frame_start_pos
 
             drag_button = drag_button or frame
             
             drag_button.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     dragging = true
-                    start = input.Position
-                    start_size = frame.Position
+                    start_pos = input.Position
+                    frame_start_pos = frame.Position
                 end
             end)
 
@@ -319,78 +319,15 @@
 
             library:connection(uis.InputChanged, function(input, game_event) 
                 if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                    local viewport_x = camera.ViewportSize.X
-                    local viewport_y = camera.ViewportSize.Y
-
-                    local current_position = dim2(
-                        0,
-                        clamp(
-                            start_size.X.Offset + (input.Position.X - start.X),
-                            0,
-                            viewport_x - frame.Size.X.Offset
-                        ),
-                        0,
-                        math.clamp(
-                            start_size.Y.Offset + (input.Position.Y - start.Y),
-                            0,
-                            viewport_y - frame.Size.Y.Offset
-                        )
+                    local delta = input.Position - start_pos
+                    local new_position = dim2(
+                        frame_start_pos.X.Scale,
+                        frame_start_pos.X.Offset + delta.X,
+                        frame_start_pos.Y.Scale,
+                        frame_start_pos.Y.Offset + delta.Y
                     )
 
-                    frame.Position = current_position
-                    library:close_element()
-                end
-            end)
-        end 
-
-        function library:mobile_draggify(frame, drag_button)
-            local dragging = false 
-            local start_size = frame.Position
-            local start 
-
-            -- For mobile, we can drag from anywhere on the screen
-            local drag_area = Instance.new("TextButton")
-            drag_area.Size = dim2(1, 0, 1, 0)
-            drag_area.BackgroundTransparency = 1
-            drag_area.Text = ""
-            drag_area.Parent = frame
-            drag_area.ZIndex = -1
-            
-            drag_area.InputBegan:Connect(function(input)
-                if (input.UserInputType == Enum.UserInputType.Touch) then
-                    dragging = true
-                    start = input.Position
-                    start_size = frame.Position
-                end
-            end)
-
-            drag_area.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.Touch then
-                    dragging = false
-                end
-            end)
-
-            library:connection(uis.InputChanged, function(input, game_event) 
-                if dragging and input.UserInputType == Enum.UserInputType.Touch then
-                    local viewport_x = camera.ViewportSize.X
-                    local viewport_y = camera.ViewportSize.Y
-
-                    local current_position = dim2(
-                        0,
-                        clamp(
-                            start_size.X.Offset + (input.Position.X - start.X),
-                            0,
-                            viewport_x - frame.Size.X.Offset
-                        ),
-                        0,
-                        math.clamp(
-                            start_size.Y.Offset + (input.Position.Y - start.Y),
-                            0,
-                            viewport_y - frame.Size.Y.Offset
-                        )
-                    )
-
-                    frame.Position = current_position
+                    frame.Position = new_position
                     library:close_element()
                 end
             end)
@@ -793,29 +730,14 @@
             end 
 
             do -- Other
-                -- Scale for mobile
-                if cfg.is_mobile then
-                    library:create("UIScale", {
-                        Parent = items["main"],
-                        Name = "\0",
-                        Scale = 0.7
-                    })
-                end
-                
-                if cfg.is_mobile then
-                    -- Mobile draggify with touch anywhere support
-                    library:mobile_draggify(items[ "main" ])
-                else
-                    library:draggify(items[ "main" ])
-                end
-                
+                library:draggify(items[ "main" ])
                 library:resizify(items[ "main" ])
             end 
 
             -- Mobile Floating Toggle Button
             if cfg.is_mobile then
                 items[ "floating_button" ] = library:create( "TextButton" , {
-                    Parent = library[ "items" ],
+                    Parent = coregui,
                     Text = "",
                     AutoButtonColor = false,
                     Name = "\0",
@@ -871,56 +793,10 @@
                 items[ "floating_button" ].MouseButton1Click:Connect(function()
                     cfg.toggle_menu(not library[ "items" ].Enabled)
                 end)
-                
-                -- Close button for mobile
-                items[ "mobile_close" ] = library:create( "TextButton" , {
-                    FontFace = fonts.font;
-                    TextColor3 = rgb(255, 255, 255);
-                    BorderColor3 = rgb(0, 0, 0);
-                    Text = "✕";
-                    AutoButtonColor = false;
-                    Parent = items[ "main" ];
-                    Name = "\0";
-                    Position = dim2(1, -45, 0, 5);
-                    Size = dim2(0, 40, 0, 40);
-                    BorderSizePixel = 0;
-                    TextSize = 20;
-                    BackgroundColor3 = rgb(25, 25, 29);
-                    ZIndex = 100;
-                });
-                
-                library:create( "UICorner" , {
-                    Parent = items[ "mobile_close" ];
-                    CornerRadius = dim(0, 8)
-                });
-                
-                library:create( "UIStroke" , {
-                    Color = rgb(35, 35, 40);
-                    Parent = items[ "mobile_close" ];
-                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-                });
-                
-                items[ "mobile_close" ].MouseButton1Click:Connect(function()
-                    cfg.toggle_menu(false)
-                end)
             end
 
             function cfg.toggle_menu(bool) 
-                if cfg.is_mobile then
-                    if bool then
-                        library[ "items" ].Enabled = true
-                        if items[ "floating_button" ] then
-                            items[ "floating_button" ].Visible = false
-                        end
-                    else
-                        library[ "items" ].Enabled = false
-                        if items[ "floating_button" ] then
-                            items[ "floating_button" ].Visible = true
-                        end
-                    end
-                else
-                    library[ "items" ].Enabled = bool
-                end
+                library[ "items" ].Enabled = bool
             end 
                 
             return setmetatable(cfg, library)
