@@ -543,7 +543,7 @@
                     library:create("UIScale", {
                         Parent = items[ "main" ];
                         Name = "\0";
-                        Scale = 0.7 -- Scale everything down to 70% on mobile
+                        Scale = 0.83 -- Scale everything down to 70% on mobile
                     })
                 end
                 
