@@ -8,6 +8,7 @@
     - Draggable area increased for mobile touch
     - Toggle button for mobile visibility
     - Touch-friendly controls
+    - Perfect scaling for all elements
 ]]
 
 -- Variables 
@@ -522,9 +523,17 @@
 
             local items = cfg.items; do
                 -- Adjust size for mobile
-                local window_size = cfg.size
+                local viewport = camera.ViewportSize
+                local window_size
                 if cfg.is_mobile then
-                    window_size = dim2(0, math.min(camera.ViewportSize.X * 0.9, 700), 0, math.min(camera.ViewportSize.Y * 0.8, 565))
+                    local is_portrait = viewport.Y > viewport.X
+                    if is_portrait then
+                        window_size = dim2(0, viewport.X * 0.95, 0, viewport.Y * 0.85)
+                    else
+                        window_size = dim2(0, viewport.X * 0.9, 0, viewport.Y * 0.8)
+                    end
+                else
+                    window_size = cfg.size
                 end
                 
                 items[ "main" ] = library:create( "Frame" , {
@@ -553,7 +562,7 @@
                     BackgroundTransparency = 1;
                     Name = "\0";
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(0, cfg.is_mobile and 150 or 196, 1, -25);
+                    Size = dim2(0, cfg.is_mobile and 140 or 196, 1, -25);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(14, 14, 16)
                 });
@@ -597,7 +606,7 @@
                 items[ "title" ] = library:create( "TextLabel" , {
                     FontFace = fonts.font;
                     BorderColor3 = rgb(0, 0, 0);
-                    Text = name;
+                    Text = cfg.name;
                     Parent = items[ "side_frame" ];
                     Name = "\0";
                     Text = string.format('<u>%s</u><font color = "rgb(255, 255, 255)">%s</font>', cfg.name, cfg.suffix);
@@ -614,9 +623,9 @@
                     Parent = items[ "main" ];
                     Name = "\0";
                     BackgroundTransparency = 1;
-                    Position = dim2(0, cfg.is_mobile and 150 or 196, 0, 0);
+                    Position = dim2(0, cfg.is_mobile and 140 or 196, 0, 0);
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(1, -(cfg.is_mobile and 150 or 196), 0, cfg.is_mobile and 48 or 56);
+                    Size = dim2(1, -(cfg.is_mobile and 140 or 196), 0, cfg.is_mobile and 48 or 56);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(255, 255, 255)
                 }); cfg.multi_holder = items[ "multi_holder" ];
@@ -653,9 +662,9 @@
                     Parent = items[ "main" ];
                     Name = "\0";
                     BackgroundTransparency = 1;
-                    Position = dim2(0, cfg.is_mobile and 150 or 196, 0, cfg.is_mobile and 48 or 56);
+                    Position = dim2(0, cfg.is_mobile and 140 or 196, 0, cfg.is_mobile and 48 or 56);
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(1, -(cfg.is_mobile and 150 or 196), 1, -(cfg.is_mobile and 73 or 81));
+                    Size = dim2(1, -(cfg.is_mobile and 140 or 196), 1, -(cfg.is_mobile and 73 or 81));
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(14, 14, 16);
                     ZIndex = 2;
@@ -667,12 +676,12 @@
                 });
                 
                 items[ "info" ] = library:create( "Frame" , {
-                    AnchorPoint = vec2(0, 1);
+                    AnchorPoint = vec2(0.5, 1);
                     Parent = items[ "main" ];
                     Name = "\0";
-                    Position = dim2(0, 0, 1, 0);
+                    Position = dim2(0.5, 0, 1, 0);
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(1, 0, 0, cfg.is_mobile and 20 or 25);
+                    Size = dim2(cfg.is_mobile and 0.9 or 1, 0, 0, cfg.is_mobile and 25 or 30);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(23, 23, 25)
                 });
@@ -718,7 +727,7 @@
                     Text = '<font color="rgb(72, 72, 73)">32 days left, </font>' .. cfg.name .. cfg.suffix;
                     Size = dim2(1, 0, 0, 0);
                     Position = dim2(0, cfg.is_mobile and -5 or -10, 0.5, -1);
-                    AnchorPoint = vec2(0, 0.5);
+                    AnchorPoint = vec2(1, 0.5);
                     BorderSizePixel = 0;
                     BackgroundTransparency = 1;
                     TextXAlignment = Enum.TextXAlignment.Right;
@@ -734,9 +743,8 @@
                 library:resizify(items[ "main" ])
             end 
 
-            -- Mobile Floating Toggle Button - Create AFTER main items are created
+            -- Mobile Floating Toggle Button
             if cfg.is_mobile then
-                -- Create separate GUI for floating button
                 local mobile_gui = library:create("ScreenGui", {
                     Parent = coregui,
                     Name = "MobileFloatingButton",
@@ -745,7 +753,6 @@
                     IgnoreGuiInset = true,
                 })
                 
-                -- Store reference to floating button
                 cfg.floating_button = library:create("TextButton", {
                     Parent = mobile_gui,
                     Text = "",
@@ -773,7 +780,6 @@
                     ApplyStrokeMode = Enum.ApplyStrokeMode.Border
                 })
                 
-                -- Floating button icon
                 local floating_logo = library:create("ImageLabel", {
                     Parent = cfg.floating_button,
                     BorderColor3 = rgb(0, 0, 0),
@@ -788,7 +794,6 @@
                     BackgroundColor3 = rgb(255, 255, 255)
                 })
                 
-                -- Make floating button draggable
                 local floating_dragging = false
                 local floating_start_pos
                 local floating_frame_start_pos
@@ -799,8 +804,6 @@
                         floating_dragging = true
                         floating_start_pos = input.Position
                         floating_frame_start_pos = cfg.floating_button.Position
-                        
-                        -- Visual feedback on press
                         library:tween(cfg.floating_button, {BackgroundTransparency = 0.1}, Enum.EasingStyle.Quad, 0.1)
                     end
                 end)
@@ -810,12 +813,10 @@
                         floating_dragging = false
                         library:tween(cfg.floating_button, {BackgroundTransparency = 0.2}, Enum.EasingStyle.Quad, 0.1)
                         
-                        -- Check if it was a click (not a drag)
                         local delta = input.Position - floating_start_pos
                         local current_time = tick()
                         
                         if delta.Magnitude < 10 then
-                            -- Simple click - toggle menu
                             local is_double_click = (current_time - last_click_time) < 0.3
                             last_click_time = current_time
                             
@@ -840,14 +841,12 @@
                     end
                 end)
                 
-                -- Store reference to logo for visual feedback
                 cfg.floating_logo = floating_logo
             end
 
             function cfg.toggle_menu(bool) 
                 library[ "items" ].Enabled = bool
                 if cfg.is_mobile and cfg.floating_logo then
-                    -- Visual feedback when toggling
                     library:tween(cfg.floating_logo, {ImageColor3 = bool and themes.preset.accent or rgb(255, 255, 255)}, Enum.EasingStyle.Quad, 0.2)
                 end
             end 
@@ -874,9 +873,9 @@
                     Name = "\0";
                     Visible = false;
                     BackgroundTransparency = 1;
-                    Position = dim2(0, self.is_mobile and 150 or 196, 0, self.is_mobile and 48 or 56);
+                    Position = dim2(0, self.is_mobile and 140 or 196, 0, self.is_mobile and 48 or 56);
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(1, -(self.is_mobile and 166 or 216), 1, -(self.is_mobile and 96 or 101));
+                    Size = dim2(1, -(self.is_mobile and 156 or 216), 1, -(self.is_mobile and 96 or 101));
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
@@ -891,7 +890,7 @@
                         AutoButtonColor = false;
                         BackgroundTransparency = 1;
                         Name = "\0";
-                        Size = dim2(1, 0, 0, self.is_mobile and 30 or 35);
+                        Size = dim2(1, 0, 0, self.is_mobile and 28 or 35);
                         BorderSizePixel = 0;
                         TextSize = self.is_mobile and 14 or 16;
                         BackgroundColor3 = rgb(29, 29, 29)
@@ -902,11 +901,11 @@
                         BorderColor3 = rgb(0, 0, 0);
                         Parent = items[ "button" ];
                         AnchorPoint = vec2(0, 0.5);
-                        Image = "http://www.roblox.com/asset/?id=6034767608";
+                        Image = cfg.icon;
                         BackgroundTransparency = 1;
                         Position = dim2(0, self.is_mobile and 5 or 10, 0.5, 0);
                         Name = "\0";
-                        Size = dim2(0, self.is_mobile and 18 or 22, 0, self.is_mobile and 18 or 22);
+                        Size = dim2(0, self.is_mobile and 16 or 22, 0, self.is_mobile and 16 or 22);
                         BorderSizePixel = 0;
                         BackgroundColor3 = rgb(255, 255, 255)
                     }); library:apply_theme(items[ "icon" ], "accent", "ImageColor3");
@@ -919,7 +918,7 @@
                         Parent = items[ "button" ];
                         Name = "\0";
                         Size = dim2(0, 0, 1, 0);
-                        Position = dim2(0, self.is_mobile and 30 or 40, 0, 0);
+                        Position = dim2(0, self.is_mobile and 28 or 40, 0, 0);
                         BackgroundTransparency = 1;
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
@@ -961,7 +960,7 @@
                     
                     library:create( "UIListLayout" , {
                         Parent = items[ "multi_section_button_holder" ];
-                        Padding = dim(0, self.is_mobile and 5 or 7);
+                        Padding = dim(0, self.is_mobile and 4 or 7);
                         SortOrder = Enum.SortOrder.LayoutOrder;
                         FillDirection = Enum.FillDirection.Horizontal
                     });
@@ -987,12 +986,12 @@
                                     Text = "";
                                     Parent = items[ "multi_section_button_holder" ];
                                     Name = "\0";
-                                    Size = dim2(0, 0, 0, self.is_mobile and 35 or 39);
+                                    Size = dim2(0, 0, 0, self.is_mobile and 30 or 39);
                                     BackgroundTransparency = 1;
                                     ClipsDescendants = true;
                                     BorderSizePixel = 0;
                                     AutomaticSize = Enum.AutomaticSize.X;
-                                    TextSize = self.is_mobile and 14 or 16;
+                                    TextSize = self.is_mobile and 12 or 14;
                                     BackgroundColor3 = rgb(25, 25, 29)
                                 });
                                 
@@ -1008,7 +1007,7 @@
                                     TextXAlignment = Enum.TextXAlignment.Left;
                                     BorderSizePixel = 0;
                                     AutomaticSize = Enum.AutomaticSize.XY;
-                                    TextSize = self.is_mobile and 14 or 16;
+                                    TextSize = self.is_mobile and 12 or 14;
                                     BackgroundColor3 = rgb(255, 255, 255)
                                 });
                                 
@@ -1037,8 +1036,8 @@
                                 
                                 library:create( "UIPadding" , {
                                     Parent = multi_items[ "button" ];
-                                    PaddingRight = dim(0, self.is_mobile and 5 or 10);
-                                    PaddingLeft = dim(0, self.is_mobile and 5 or 10)
+                                    PaddingRight = dim(0, self.is_mobile and 4 or 10);
+                                    PaddingLeft = dim(0, self.is_mobile and 4 or 10)
                                 });
                                 
                                 library:create( "UICorner" , {
@@ -1063,7 +1062,7 @@
                                     FillDirection = Enum.FillDirection.Vertical;
                                     HorizontalFlex = Enum.UIFlexAlignment.Fill;
                                     Parent = multi_items[ "tab" ];
-                                    Padding = dim(0, self.is_mobile and 5 or 7);
+                                    Padding = dim(0, self.is_mobile and 4 or 7);
                                     SortOrder = Enum.SortOrder.LayoutOrder;
                                     VerticalFlex = Enum.UIFlexAlignment.Fill
                                 });
@@ -1136,7 +1135,7 @@
                         self.items[ "global_fade" ].BackgroundTransparency = 0
                         
                         library:tween(self.items[ "global_fade" ], {BackgroundTransparency = 1}, Enum.EasingStyle.Quad, 0.4)
-                        selected_tab[ 4 ].Size = dim2(1, -(self.is_mobile and 166 or 216), 1, -(self.is_mobile and 96 or 101))
+                        selected_tab[ 4 ].Size = dim2(1, -(self.is_mobile and 156 or 216), 1, -(self.is_mobile and 96 or 101))
                     end
 
                     library:tween(selected_tab[ 1 ], {BackgroundTransparency = 1})
@@ -1152,7 +1151,7 @@
                 library:tween(items[ "button" ], {BackgroundTransparency = 0})
                 library:tween(items[ "icon" ], {ImageColor3 = themes.preset.accent})
                 library:tween(items[ "name" ], {TextColor3 = rgb(255, 255, 255)})
-                library:tween(items[ "tab_holder" ], {Size = dim2(1, -(self.is_mobile and 150 or 196), 1, -(self.is_mobile and 73 or 81))}, Enum.EasingStyle.Quad, 0.4)
+                library:tween(items[ "tab_holder" ], {Size = dim2(1, -(self.is_mobile and 140 or 196), 1, -(self.is_mobile and 73 or 81))}, Enum.EasingStyle.Quad, 0.4)
                 
                 items[ "tab_holder" ].Visible = true 
                 items[ "tab_holder" ].Parent = self.items[ "main" ]
@@ -1193,12 +1192,12 @@
                     Parent = self.items[ "button_holder" ];
                     Name = "\0";
                     Size = dim2(1, 0, 0, 0);
-                    Position = dim2(0, self.is_mobile and 30 or 40, 0, 0);
+                    Position = dim2(0, self.is_mobile and 28 or 40, 0, 0);
                     BackgroundTransparency = 1;
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0; 
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = self.is_mobile and 14 or 16;
+                    TextSize = self.is_mobile and 12 or 14;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -1228,14 +1227,14 @@
                     });
                     
                     library:create( "UIPadding" , {
-                        PaddingBottom = dim(0, self.is_mobile and 5 or 10);
+                        PaddingBottom = dim(0, self.is_mobile and 4 or 10);
                         Parent = items[ "column" ]
                     });
                     
                     library:create( "UIListLayout" , {
                         Parent = items[ "column" ];
                         HorizontalFlex = Enum.UIFlexAlignment.Fill;
-                        Padding = dim(0, self.is_mobile and 5 or 10);
+                        Padding = dim(0, self.is_mobile and 4 or 10);
                         FillDirection = Enum.FillDirection.Vertical;
                         SortOrder = Enum.SortOrder.LayoutOrder
                     });
@@ -1264,7 +1263,7 @@
                         HorizontalFlex = Enum.UIFlexAlignment.Fill;
                         VerticalFlex = Enum.UIFlexAlignment.Fill;
                         Parent = items[ "tab_parent" ];
-                        Padding = dim(0, self.is_mobile and 5 or 7);
+                        Padding = dim(0, self.is_mobile and 4 or 7);
                         SortOrder = Enum.SortOrder.LayoutOrder;
                     });
                 end
@@ -1289,7 +1288,7 @@
                     Name = "\0";
                     Parent = self.items[ "column" ];
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(0, 0, cfg.size, -3);
+                    Size = dim2(0, 0, cfg.size, self.is_mobile and -4 or -3);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(25, 25, 29)
                 });
@@ -1321,9 +1320,9 @@
                     ScrollBarThickness = 2;
                     Parent = items[ "inline" ];
                     Name = "\0";
-                    Size = dim2(1, 0, 1, -(self.is_mobile and 35 or 40));
+                    Size = dim2(1, 0, 1, -(self.is_mobile and 32 or 40));
                     BackgroundTransparency = 1;
-                    Position = dim2(0, 0, 0, self.is_mobile and 30 or 35);
+                    Position = dim2(0, 0, 0, self.is_mobile and 28 or 35);
                     BackgroundColor3 = rgb(255, 255, 255);
                     BorderColor3 = rgb(0, 0, 0);
                     BorderSizePixel = 0;
@@ -1335,8 +1334,8 @@
                     Parent = items[ "scrolling" ];
                     Name = "\0";
                     BackgroundTransparency = 1;
-                    Position = dim2(0, self.is_mobile and 5 or 10, 0, self.is_mobile and 5 or 10);
-                    Size = dim2(1, -(self.is_mobile and 10 or 20), 0, 0);
+                    Position = dim2(0, self.is_mobile and 4 or 10, 0, self.is_mobile and 4 or 10);
+                    Size = dim2(1, -(self.is_mobile and 8 or 20), 0, 0);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.Y;
                     BackgroundColor3 = rgb(255, 255, 255)
@@ -1344,12 +1343,12 @@
                 
                 library:create( "UIListLayout" , {
                     Parent = items[ "elements" ];
-                    Padding = dim(0, self.is_mobile and 5 or 10);
+                    Padding = dim(0, self.is_mobile and 4 or 10);
                     SortOrder = Enum.SortOrder.LayoutOrder
                 });
                 
                 library:create( "UIPadding" , {
-                    PaddingBottom = dim(0, self.is_mobile and 10 or 15);
+                    PaddingBottom = dim(0, self.is_mobile and 8 or 15);
                     Parent = items[ "elements" ]
                 });
                 
@@ -1362,9 +1361,9 @@
                     Parent = items[ "outline" ];
                     Name = "\0";
                     Position = dim2(0, 1, 0, 1);
-                    Size = dim2(1, -2, 0, self.is_mobile and 30 or 35);
+                    Size = dim2(1, -2, 0, self.is_mobile and 28 or 35);
                     BorderSizePixel = 0;
-                    TextSize = self.is_mobile and 14 or 16;
+                    TextSize = self.is_mobile and 12 or 16;
                     BackgroundColor3 = rgb(19, 19, 21)
                 });
                 
@@ -1387,9 +1386,9 @@
                     AnchorPoint = vec2(0, 0.5);
                     Image = cfg.icon;
                     BackgroundTransparency = 1;
-                    Position = dim2(0, self.is_mobile and 5 or 10, 0.5, 0);
+                    Position = dim2(0, self.is_mobile and 4 or 10, 0.5, 0);
                     Name = "\0";
-                    Size = dim2(0, self.is_mobile and 18 or 22, 0, self.is_mobile and 18 or 22);
+                    Size = dim2(0, self.is_mobile and 16 or 22, 0, self.is_mobile and 16 or 22);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(255, 255, 255)
                 }); library:apply_theme(items[ "Icon" ], "accent", "ImageColor3");
@@ -1402,12 +1401,12 @@
                     Parent = items[ "button" ];
                     Name = "\0";
                     Size = dim2(0, 0, 1, 0);
-                    Position = dim2(0, self.is_mobile and 30 or 40, 0, -1);
+                    Position = dim2(0, self.is_mobile and 26 or 40, 0, -1);
                     BackgroundTransparency = 1;
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.X;
-                    TextSize = self.is_mobile and 14 or 16;
+                    TextSize = self.is_mobile and 12 or 16;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -1431,10 +1430,10 @@
                         AnchorPoint = vec2(1, 0.5);
                         Parent = items[ "button" ];
                         Name = "\0";
-                        Position = dim2(1, self.is_mobile and -5 or -9, 0.5, 0);
-                        Size = dim2(0, self.is_mobile and 30 or 36, 0, self.is_mobile and 15 or 18);
+                        Position = dim2(1, self.is_mobile and -4 or -9, 0.5, 0);
+                        Size = dim2(0, self.is_mobile and 26 or 36, 0, self.is_mobile and 14 or 18);
                         BorderSizePixel = 0;
-                        TextSize = self.is_mobile and 12 or 14;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(58, 58, 62)
                     });  library:apply_theme(items[ "toggle" ], "accent", "BackgroundColor3");
                     
@@ -1469,7 +1468,7 @@
                         Name = "\0";
                         Position = dim2(0, 2, 0, 2);
                         BorderColor3 = rgb(0, 0, 0);
-                        Size = dim2(0, self.is_mobile and 9 or 12, 0, self.is_mobile and 9 or 12);
+                        Size = dim2(0, self.is_mobile and 8 or 12, 0, self.is_mobile and 8 or 12);
                         BorderSizePixel = 0;
                         BackgroundColor3 = rgb(86, 86, 88)
                     });
@@ -1510,7 +1509,7 @@
                 function cfg.toggle_section(bool)
                     library:tween(items[ "toggle" ], {BackgroundColor3 = bool and themes.preset.accent or rgb(58, 58, 62)}, Enum.EasingStyle.Quad)
                     library:tween(items[ "toggle_outline" ], {BackgroundColor3 = bool and themes.preset.accent or rgb(50, 50, 50)}, Enum.EasingStyle.Quad)
-                    library:tween(items[ "toggle_circle" ], {BackgroundColor3 = bool and rgb(255, 255, 255) or rgb(86, 86, 88), Position = bool and dim2(1, -(self.is_mobile and 11 or 14), 0, 2) or dim2(0, 2, 0, 2)}, Enum.EasingStyle.Quad)
+                    library:tween(items[ "toggle_circle" ], {BackgroundColor3 = bool and rgb(255, 255, 255) or rgb(86, 86, 88), Position = bool and dim2(1, -(self.is_mobile and 10 or 14), 0, 2) or dim2(0, 2, 0, 2)}, Enum.EasingStyle.Quad)
                     library:tween(items[ "fade" ], {BackgroundTransparency = bool and 1 or 0.8}, Enum.EasingStyle.Quad)
                 end 
             end 
@@ -1550,7 +1549,7 @@
                     Size = dim2(1, 0, 0, 0);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.Y;
-                    TextSize = self.is_mobile and 12 or 14;
+                    TextSize = self.is_mobile and 10 or 14;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -1566,7 +1565,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = self.is_mobile and 14 or 16;
+                    TextSize = self.is_mobile and 12 or 16;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
 
@@ -1579,13 +1578,13 @@
                         Text = cfg.info;
                         Parent = items[ "toggle" ];
                         Name = "\0";
-                        Position = dim2(0, 5, 0, 17);
-                        Size = dim2(1, -10, 0, 0);
+                        Position = dim2(0, 4, 0, 15);
+                        Size = dim2(1, -8, 0, 0);
                         BackgroundTransparency = 1;
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = self.is_mobile and 14 or 16;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                 end 
@@ -1610,7 +1609,7 @@
                     FillDirection = Enum.FillDirection.Horizontal;
                     HorizontalAlignment = Enum.HorizontalAlignment.Right;
                     Parent = items[ "right_components" ];
-                    Padding = dim(0, self.is_mobile and 7 or 9);
+                    Padding = dim(0, self.is_mobile and 5 or 9);
                     SortOrder = Enum.SortOrder.LayoutOrder
                 });
                 
@@ -1627,15 +1626,15 @@
                             Parent = items[ "right_components" ];
                             Name = "\0";
                             Position = dim2(1, 0, 0, 0);
-                            Size = dim2(0, self.is_mobile and 14 or 16, 0, self.is_mobile and 14 or 16);
+                            Size = dim2(0, self.is_mobile and 12 or 16, 0, self.is_mobile and 12 or 16);
                             BorderSizePixel = 0;
-                            TextSize = self.is_mobile and 12 or 14;
+                            TextSize = self.is_mobile and 10 or 14;
                             BackgroundColor3 = rgb(67, 67, 68)
                         }); library:apply_theme(items[ "toggle_button" ], "accent", "BackgroundColor3");
                         
                         library:create( "UICorner" , {
                             Parent = items[ "toggle_button" ];
-                            CornerRadius = dim(0, 4)
+                            CornerRadius = dim(0, 3)
                         });
                         
                         items[ "outline" ] = library:create( "Frame" , {
@@ -1664,7 +1663,7 @@
 
                         library:create( "UICorner" , {
                             Parent = items[ "outline" ];
-                            CornerRadius = dim(0, 4)
+                            CornerRadius = dim(0, 3)
                         });
                         
                         library:create( "UIGradient" , {
@@ -1682,10 +1681,10 @@
                             AnchorPoint = vec2(1, 0.5);
                             Parent = items[ "right_components" ];
                             Name = "\0";
-                            Position = dim2(1, self.is_mobile and -5 or -9, 0.5, 0);
-                            Size = dim2(0, self.is_mobile and 30 or 36, 0, self.is_mobile and 15 or 18);
+                            Position = dim2(1, self.is_mobile and -4 or -9, 0.5, 0);
+                            Size = dim2(0, self.is_mobile and 26 or 36, 0, self.is_mobile and 14 or 18);
                             BorderSizePixel = 0;
-                            TextSize = self.is_mobile and 12 or 14;
+                            TextSize = self.is_mobile and 10 or 14;
                             BackgroundColor3 = themes.preset.accent
                         }); library:apply_theme(items[ "toggle_button" ], "accent", "BackgroundColor3");
                         
@@ -1718,9 +1717,9 @@
                         items[ "circle" ] = library:create( "Frame" , {
                             Parent = items[ "inline" ];
                             Name = "\0";
-                            Position = dim2(1, -(self.is_mobile and 11 or 14), 0, 2);
+                            Position = dim2(1, -(self.is_mobile and 10 or 14), 0, 2);
                             BorderColor3 = rgb(0, 0, 0);
-                            Size = dim2(0, self.is_mobile and 9 or 12, 0, self.is_mobile and 9 or 12);
+                            Size = dim2(0, self.is_mobile and 8 or 12, 0, self.is_mobile and 8 or 12);
                             BorderSizePixel = 0;
                             BackgroundColor3 = rgb(255, 255, 255)
                         });
@@ -1741,7 +1740,7 @@
                 else
                     library:tween(items[ "toggle_button" ], {BackgroundColor3 = bool and themes.preset.accent or rgb(58, 58, 62)}, Enum.EasingStyle.Quad)
                     library:tween(items[ "inline" ], {BackgroundColor3 = bool and themes.preset.accent or rgb(50, 50, 50)}, Enum.EasingStyle.Quad)
-                    library:tween(items[ "circle" ], {BackgroundColor3 = bool and rgb(255, 255, 255) or rgb(86, 86, 88), Position = bool and dim2(1, -(self.is_mobile and 11 or 14), 0, 2) or dim2(0, 2, 0, 2)}, Enum.EasingStyle.Quad)
+                    library:tween(items[ "circle" ], {BackgroundColor3 = bool and rgb(255, 255, 255) or rgb(86, 86, 88), Position = bool and dim2(1, -(self.is_mobile and 10 or 14), 0, 2) or dim2(0, 2, 0, 2)}, Enum.EasingStyle.Quad)
                 end
 
                 cfg.callback(bool)
@@ -1816,7 +1815,7 @@
                     Size = dim2(1, 0, 0, 0);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.Y;
-                    TextSize = self.is_mobile and 12 or 14;
+                    TextSize = self.is_mobile and 10 or 14;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -1832,7 +1831,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = self.is_mobile and 14 or 16;
+                    TextSize = self.is_mobile and 12 or 16;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -1845,13 +1844,13 @@
                         Text = cfg.info;
                         Parent = items[ "slider_object" ];
                         Name = "\0";
-                        Position = dim2(0, 5, 0, 37);
-                        Size = dim2(1, -10, 0, 0);
+                        Position = dim2(0, 4, 0, 35);
+                        Size = dim2(1, -8, 0, 0);
                         BackgroundTransparency = 1;
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = self.is_mobile and 14 or 16;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                 end 
@@ -1866,16 +1865,16 @@
                     Parent = items[ "slider_object" ];
                     Name = "\0";
                     BackgroundTransparency = 1;
-                    Position = dim2(0, 4, 0, 23);
+                    Position = dim2(0, 4, 0, 20);
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(1, 0, 0, self.is_mobile and 10 or 12);
+                    Size = dim2(1, 0, 0, self.is_mobile and 8 or 12);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
                 library:create( "UIListLayout" , {
                     Parent = items[ "right_components" ];
-                    Padding = dim(0, self.is_mobile and 5 or 7);
+                    Padding = dim(0, self.is_mobile and 4 or 7);
                     SortOrder = Enum.SortOrder.LayoutOrder;
                     FillDirection = Enum.FillDirection.Horizontal
                 });
@@ -1890,9 +1889,9 @@
                     Parent = items[ "right_components" ];
                     Name = "\0";
                     Position = dim2(1, 0, 0, 0);
-                    Size = dim2(1, -4, 0, self.is_mobile and 3 or 4);
+                    Size = dim2(1, -4, 0, self.is_mobile and 2 or 4);
                     BorderSizePixel = 0;
-                    TextSize = self.is_mobile and 12 or 14;
+                    TextSize = self.is_mobile and 10 or 14;
                     BackgroundColor3 = rgb(33, 33, 35)
                 });
                 
@@ -1905,7 +1904,7 @@
                     Name = "\0";
                     Parent = items[ "slider" ];
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(0.5, 0, 0, self.is_mobile and 3 or 4);
+                    Size = dim2(0.5, 0, 0, self.is_mobile and 2 or 4);
                     BorderSizePixel = 0;
                     BackgroundColor3 = themes.preset.accent
                 });  library:apply_theme(items[ "fill" ], "accent", "BackgroundColor3");
@@ -1921,7 +1920,7 @@
                     Name = "\0";
                     Position = dim2(1, 0, 0.5, 0);
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(0, self.is_mobile and 10 or 12, 0, self.is_mobile and 10 or 12);
+                    Size = dim2(0, self.is_mobile and 8 or 12, 0, self.is_mobile and 8 or 12);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(244, 244, 244)
                 });
@@ -1933,7 +1932,7 @@
                 
                 library:create( "UIPadding" , {
                     Parent = items[ "right_components" ];
-                    PaddingTop = dim(0, self.is_mobile and 3 or 4)
+                    PaddingTop = dim(0, self.is_mobile and 2 or 4)
                 });
                 
                 items[ "value" ] = library:create( "TextLabel" , {
@@ -1944,12 +1943,12 @@
                     Parent = items[ "slider_object" ];
                     Name = "\0";
                     Size = dim2(1, 0, 0, 0);
-                    Position = dim2(0, 6, 0, 0);
+                    Position = dim2(0, 4, 0, 0);
                     BackgroundTransparency = 1;
                     TextXAlignment = Enum.TextXAlignment.Right;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = self.is_mobile and 14 or 16;
+                    TextSize = self.is_mobile and 12 or 16;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -1963,7 +1962,7 @@
             function cfg.set(value)
                 cfg.value = clamp(library:round(value, cfg.intervals), cfg.min, cfg.max)
 
-                library:tween(items[ "fill" ], {Size = dim2((cfg.value - cfg.min) / (cfg.max - cfg.min), cfg.value == cfg.min and 0 or -4, 0, self.is_mobile and 3 or 4)}, Enum.EasingStyle.Linear, 0.05)
+                library:tween(items[ "fill" ], {Size = dim2((cfg.value - cfg.min) / (cfg.max - cfg.min), cfg.value == cfg.min and 0 or -4, 0, self.is_mobile and 2 or 4)}, Enum.EasingStyle.Linear, 0.05)
                 items[ "value" ].Text = tostring(cfg.value) .. cfg.suffix
 
                 flags[cfg.flag] = cfg.value
@@ -2046,7 +2045,7 @@
                         Size = dim2(1, 0, 0, 0);
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.Y;
-                        TextSize = self.is_mobile and 12 or 14;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -2062,7 +2061,7 @@
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = self.is_mobile and 14 or 16;
+                        TextSize = self.is_mobile and 12 or 16;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -2075,13 +2074,13 @@
                             Text = cfg.info;
                             Parent = items[ "dropdown_object" ];
                             Name = "\0";
-                            Position = dim2(0, 5, 0, 17);
-                            Size = dim2(1, -10, 0, 0);
+                            Position = dim2(0, 4, 0, 15);
+                            Size = dim2(1, -8, 0, 0);
                             BackgroundTransparency = 1;
                             TextXAlignment = Enum.TextXAlignment.Left;
                             BorderSizePixel = 0;
                             AutomaticSize = Enum.AutomaticSize.XY;
-                            TextSize = self.is_mobile and 14 or 16;
+                            TextSize = self.is_mobile and 10 or 14;
                             BackgroundColor3 = rgb(255, 255, 255)
                         });
                     end 
@@ -2106,7 +2105,7 @@
                         FillDirection = Enum.FillDirection.Horizontal;
                         HorizontalAlignment = Enum.HorizontalAlignment.Right;
                         Parent = items[ "right_components" ];
-                        Padding = dim(0, self.is_mobile and 5 or 7);
+                        Padding = dim(0, self.is_mobile and 4 or 7);
                         SortOrder = Enum.SortOrder.LayoutOrder
                     });
                     
@@ -2120,15 +2119,15 @@
                         Parent = items[ "right_components" ];
                         Name = "\0";
                         Position = dim2(1, 0, 0, 0);
-                        Size = dim2(0, self.is_mobile and 110 or cfg.width, 0, self.is_mobile and 14 or 16);
+                        Size = dim2(0, self.is_mobile and 90 or cfg.width, 0, self.is_mobile and 12 or 16);
                         BorderSizePixel = 0;
-                        TextSize = self.is_mobile and 12 or 14;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(33, 33, 35)
                     });
                     
                     library:create( "UICorner" , {
                         Parent = items[ "dropdown" ];
-                        CornerRadius = dim(0, 4)
+                        CornerRadius = dim(0, 3)
                     });
                     
                     items[ "sub_text" ] = library:create( "TextLabel" , {
@@ -2138,13 +2137,13 @@
                         Text = "awdawdawdawdawdawdawdaw";
                         Parent = items[ "dropdown" ];
                         Name = "\0";
-                        Size = dim2(1, -12, 0, 0);
+                        Size = dim2(1, -10, 0, 0);
                         BorderSizePixel = 0;
                         BackgroundTransparency = 1;
                         TextXAlignment = Enum.TextXAlignment.Left;
                         TextTruncate = Enum.TextTruncate.AtEnd;
                         AutomaticSize = Enum.AutomaticSize.Y;
-                        TextSize = self.is_mobile and 12 or 14;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -2162,9 +2161,9 @@
                         AnchorPoint = vec2(1, 0.5);
                         Image = "rbxassetid://101025591575185";
                         BackgroundTransparency = 1;
-                        Position = dim2(1, self.is_mobile and -3 or -5, 0.5, 0);
+                        Position = dim2(1, self.is_mobile and -2 or -5, 0.5, 0);
                         Name = "\0";
-                        Size = dim2(0, self.is_mobile and 10 or 12, 0, self.is_mobile and 10 or 12);
+                        Size = dim2(0, self.is_mobile and 8 or 12, 0, self.is_mobile and 8 or 12);
                         BorderSizePixel = 0;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
@@ -2221,12 +2220,12 @@
                     Text = text;
                     Parent = items[ "outline" ];
                     Name = "\0";
-                    Size = dim2(1, -12, 0, 0);
+                    Size = dim2(1, -10, 0, 0);
                     BackgroundTransparency = 1;
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.Y;
-                    TextSize = self.is_mobile and 12 or 14;
+                    TextSize = self.is_mobile and 10 or 14;
                     BackgroundColor3 = rgb(255, 255, 255);
                     ZIndex = 10;
                 }); library:apply_theme(button, "accent", "TextColor3");
@@ -2282,7 +2281,7 @@
 
                 for _, option in list do 
                     local button = cfg.render_option(option)
-                    cfg.y_size += button.AbsoluteSize.Y + 6 -- super annoying manual sizing but oh well
+                    cfg.y_size += button.AbsoluteSize.Y + 6
                     insert(cfg.option_instances, button)
                     
                     button.MouseButton1Down:Connect(function()
@@ -2355,7 +2354,7 @@
                     Size = dim2(1, 0, 0, 0);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.Y;
-                    TextSize = self.is_mobile and 12 or 14;
+                    TextSize = self.is_mobile and 10 or 14;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -2371,7 +2370,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = self.is_mobile and 14 or 16;
+                    TextSize = self.is_mobile and 12 or 16;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
 
@@ -2384,13 +2383,13 @@
                         Text = cfg.info;
                         Parent = items[ "label" ];
                         Name = "\0";
-                        Position = dim2(0, 5, 0, 17);
-                        Size = dim2(1, -10, 0, 0);
+                        Position = dim2(0, 4, 0, 15);
+                        Size = dim2(1, -8, 0, 0);
                         BackgroundTransparency = 1;
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = self.is_mobile and 14 or 16;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                 end 
@@ -2415,7 +2414,7 @@
                     FillDirection = Enum.FillDirection.Horizontal;
                     HorizontalAlignment = Enum.HorizontalAlignment.Right;
                     Parent = items[ "right_components" ];
-                    Padding = dim(0, self.is_mobile and 7 or 9);
+                    Padding = dim(0, self.is_mobile and 5 or 9);
                     SortOrder = Enum.SortOrder.LayoutOrder
                 });                
             end 
@@ -2440,7 +2439,7 @@
                 name = options.name or "Color", 
                 flag = options.flag or library:next_flag(),
 
-                color = options.color or color(1, 1, 1), -- Default to white color if not provided
+                color = options.color or color(1, 1, 1),
                 alpha = options.alpha and 1 - options.alpha or 0,
                 
                 open = false, 
@@ -2476,15 +2475,15 @@
                         Parent = label and label.items.right_components or self.items[ "right_components" ];
                         Name = "\0";
                         Position = dim2(1, 0, 0, 0);
-                        Size = dim2(0, self.is_mobile and 14 or 16, 0, self.is_mobile and 14 or 16);
+                        Size = dim2(0, self.is_mobile and 12 or 16, 0, self.is_mobile and 12 or 16);
                         BorderSizePixel = 0;
-                        TextSize = self.is_mobile and 12 or 14;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(54, 31, 184)
                     });
                     
                     library:create( "UICorner" , {
                         Parent = items[ "colorpicker" ];
-                        CornerRadius = dim(0, 4)
+                        CornerRadius = dim(0, 3)
                     });
                     
                     items[ "colorpicker_inline" ] = library:create( "Frame" , {
@@ -2500,7 +2499,7 @@
                     
                     library:create( "UICorner" , {
                         Parent = items[ "colorpicker_inline" ];
-                        CornerRadius = dim(0, 4)
+                        CornerRadius = dim(0, 3)
                     });
                     
                     library:create( "UIGradient" , {
@@ -2766,12 +2765,12 @@
                         PlaceholderColor3 = rgb(255, 255, 255);
                         CursorPosition = -1;
                         ClearTextOnFocus = false;
-                        TextSize = self.is_mobile and 12 or 14;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(255, 255, 255);
                         TextColor3 = rgb(72, 72, 72);
                         BorderColor3 = rgb(0, 0, 0);
                         Position = dim2(1, -8, 1, -11);
-                        Size = dim2(1, -16, 0, self.is_mobile and 16 or 18);
+                        Size = dim2(1, -16, 0, self.is_mobile and 14 or 18);
                         BackgroundColor3 = rgb(33, 33, 35)
                     }); 
                     
@@ -2780,7 +2779,7 @@
                         CornerRadius = dim(0, 3)
                     });
                     
-                    items[ "UICorenr" ] = library:create( "UICorner" , { -- fire misstypo (im not fixing this RAWR)
+                    items[ "UICorenr" ] = library:create( "UICorner" , {
                         Parent = items[ "colorpicker_holder" ];
                         Name = "\0";
                         CornerRadius = dim(0, 4)
@@ -2820,7 +2819,7 @@
                 library:tween(items[ "alpha_picker" ], {Position = dim2(0, (items[ "alpha_gradient" ].AbsoluteSize.X - items[ "alpha_picker" ].AbsoluteSize.X) * (1 - a), 0.5, 0)}, Enum.EasingStyle.Linear, 0.05)
                 library:tween(items[ "satvalpicker" ], {Position = dim2(0, s * (items[ "saturation_holder" ].AbsoluteSize.X - items[ "satvalpicker" ].AbsoluteSize.X), 1, 1 - v * (items[ "saturation_holder" ].AbsoluteSize.Y - items[ "satvalpicker" ].AbsoluteSize.Y))}, Enum.EasingStyle.Linear, 0.05)
 
-                items[ "alpha_indicator" ]:FindFirstChildOfClass("UIGradient").Color = rgbseq{rgbkey(0, rgb(112, 112, 112)), rgbkey(1, hsv(h, 1, 1))}; -- shit code
+                items[ "alpha_indicator" ]:FindFirstChildOfClass("UIGradient").Color = rgbseq{rgbkey(0, rgb(112, 112, 112)), rgbkey(1, hsv(h, 1, 1))};
                 
                 items[ "colorpicker" ].BackgroundColor3 = Color
                 items[ "colorpicker_inline" ].BackgroundColor3 = Color
@@ -2939,7 +2938,7 @@
                     Size = dim2(1, 0, 0, 0);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.Y;
-                    TextSize = self.is_mobile and 12 or 14;
+                    TextSize = self.is_mobile and 10 or 14;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -2955,7 +2954,7 @@
                     TextXAlignment = Enum.TextXAlignment.Left;
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = self.is_mobile and 14 or 16;
+                    TextSize = self.is_mobile and 12 or 16;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -2969,16 +2968,16 @@
                     Parent = items[ "textbox" ];
                     Name = "\0";
                     BackgroundTransparency = 1;
-                    Position = dim2(0, 4, 0, 19);
+                    Position = dim2(0, 4, 0, 17);
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(1, 0, 0, self.is_mobile and 10 or 12);
+                    Size = dim2(1, 0, 0, self.is_mobile and 8 or 12);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
                 library:create( "UIListLayout" , {
                     Parent = items[ "right_components" ];
-                    Padding = dim(0, self.is_mobile and 5 or 7);
+                    Padding = dim(0, self.is_mobile and 4 or 7);
                     SortOrder = Enum.SortOrder.LayoutOrder;
                     FillDirection = Enum.FillDirection.Horizontal
                 });
@@ -2993,12 +2992,12 @@
                     PlaceholderColor3 = rgb(255, 255, 255);
                     CursorPosition = -1;
                     ClearTextOnFocus = false;
-                    TextSize = self.is_mobile and 12 or 14;
+                    TextSize = self.is_mobile and 10 or 14;
                     BackgroundColor3 = rgb(255, 255, 255);
                     TextColor3 = rgb(72, 72, 72);
                     BorderColor3 = rgb(0, 0, 0);
                     Position = dim2(1, 0, 0, 0);
-                    Size = dim2(1, -4, 0, self.is_mobile and 26 or 30);
+                    Size = dim2(1, -4, 0, self.is_mobile and 22 or 30);
                     BackgroundColor3 = rgb(33, 33, 35)
                 }); 
 
@@ -3009,8 +3008,8 @@
                 
                 library:create( "UIPadding" , {
                     Parent = items[ "right_components" ];
-                    PaddingTop = dim(0, self.is_mobile and 3 or 4);
-                    PaddingRight = dim(0, self.is_mobile and 3 or 4)
+                    PaddingTop = dim(0, self.is_mobile and 2 or 4);
+                    PaddingRight = dim(0, self.is_mobile and 2 or 4)
                 });
             end 
             
@@ -3080,7 +3079,7 @@
                         Size = dim2(1, 0, 0, 0);
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.Y;
-                        TextSize = self.is_mobile and 12 or 14;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -3096,7 +3095,7 @@
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = self.is_mobile and 14 or 16;
+                        TextSize = self.is_mobile and 12 or 16;
                         BackgroundColor3 = rgb(255, 255, 255)
                 });
                     
@@ -3120,7 +3119,7 @@
                         FillDirection = Enum.FillDirection.Horizontal;
                         HorizontalAlignment = Enum.HorizontalAlignment.Right;
                         Parent = items[ "right_components" ];
-                        Padding = dim(0, self.is_mobile and 5 or 7);
+                        Padding = dim(0, self.is_mobile and 4 or 7);
                         SortOrder = Enum.SortOrder.LayoutOrder
                     });
                     
@@ -3132,12 +3131,12 @@
                         Parent = items[ "right_components" ];
                         AutoButtonColor = false;
                         AnchorPoint = vec2(1, 0);
-                        Size = dim2(0, 0, 0, self.is_mobile and 14 or 16);
+                        Size = dim2(0, 0, 0, self.is_mobile and 12 or 16);
                         Name = "\0";
                         Position = dim2(1, 0, 0, 0);
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.X;
-                        TextSize = self.is_mobile and 12 or 14;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(33, 33, 35)
                     });
                     
@@ -3153,12 +3152,12 @@
                         Text = "LSHIFT";
                         Parent = items[ "keybind_holder" ];
                         Name = "\0";
-                        Size = dim2(1, -12, 0, 0);
+                        Size = dim2(1, -10, 0, 0);
                         BackgroundTransparency = 1;
                         TextXAlignment = Enum.TextXAlignment.Left;
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = self.is_mobile and 12 or 14;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -3227,7 +3226,7 @@
                             TextXAlignment = Enum.TextXAlignment.Left;
                             BorderSizePixel = 0;
                             AutomaticSize = Enum.AutomaticSize.XY;
-                            TextSize = self.is_mobile and 12 or 14;
+                            TextSize = self.is_mobile and 10 or 14;
                             BackgroundColor3 = rgb(255, 255, 255)
                         }); cfg.hold_instances[option] = name
                         library:apply_theme(name, "accent", "TextColor3")
@@ -3252,7 +3251,7 @@
                 -- 
             end 
             
-            function cfg.modify_mode_color(path) -- ts so frikin tuff 💀
+            function cfg.modify_mode_color(path)
                 for _, v in cfg.hold_instances do 
                     v.TextColor3 = rgb(72, 72, 72)
                 end 
@@ -3408,9 +3407,9 @@
                     Parent = items[ "button_element" ];
                     Name = "\0";
                     Position = dim2(1, self.is_mobile and -3 or -4, 0, 0);
-                    Size = dim2(1, -(self.is_mobile and 6 or 8), 0, self.is_mobile and 26 or 30);
+                    Size = dim2(1, -(self.is_mobile and 6 or 8), 0, self.is_mobile and 22 or 30);
                     BorderSizePixel = 0;
-                    TextSize = self.is_mobile and 12 or 14;
+                    TextSize = self.is_mobile and 10 or 14;
                     BackgroundColor3 = rgb(33, 33, 35)
                 });
                 
@@ -3430,7 +3429,7 @@
                     Size = dim2(1, 0, 1, 0);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = self.is_mobile and 12 or 14;
+                    TextSize = self.is_mobile and 10 or 14;
                     BackgroundColor3 = rgb(255, 255, 255)
                 }); library:apply_theme(items[ "name" ], "accent", "BackgroundColor3");                            
             end 
@@ -3449,7 +3448,7 @@
             local cfg = {
                 open = false; 
                 items = {}; 
-                sanity = true; -- made this for my own sanity.
+                sanity = true;
             }
 
             local items = cfg.items; do 
@@ -3485,8 +3484,8 @@
                     Parent = items[ "inline" ];
                     Name = "\0";
                     BackgroundTransparency = 1;
-                    Position = dim2(0, self.is_mobile and 5 or 10, 0, self.is_mobile and 5 or 10);
-                    Size = dim2(1, -(self.is_mobile and 10 or 20), 0, 0);
+                    Position = dim2(0, self.is_mobile and 4 or 10, 0, self.is_mobile and 4 or 10);
+                    Size = dim2(1, -(self.is_mobile and 8 or 20), 0, 0);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.Y;
                     BackgroundColor3 = rgb(255, 255, 255)
@@ -3494,12 +3493,12 @@
                 
                 library:create( "UIListLayout" , {
                     Parent = items[ "elements" ];
-                    Padding = dim(0, self.is_mobile and 5 or 10);
+                    Padding = dim(0, self.is_mobile and 4 or 10);
                     SortOrder = Enum.SortOrder.LayoutOrder
                 });
                 
                 library:create( "UIPadding" , {
-                    PaddingBottom = dim(0, self.is_mobile and 10 or 15);
+                    PaddingBottom = dim(0, self.is_mobile and 8 or 15);
                     Parent = items[ "elements" ]
                 });
                 
@@ -3519,14 +3518,14 @@
                     AutoButtonColor = false;
                     Parent = self.items[ "right_components" ];
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(0, self.is_mobile and 14 or 16, 0, self.is_mobile and 14 or 16);
+                    Size = dim2(0, self.is_mobile and 12 or 16, 0, self.is_mobile and 12 or 16);
                     BorderSizePixel = 0;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });                
             end 
 
             function cfg.set_visible(bool)                 
-                library:tween(items[ "outline" ], {Size = dim_offset(bool and (self.is_mobile and 180 or 240) or 0, 0)})
+                library:tween(items[ "outline" ], {Size = dim_offset(bool and (self.is_mobile and 160 or 240) or 0, 0)})
                 items[ "outline" ].Position = dim_offset(items[ "tick" ].AbsolutePosition.X, items[ "tick" ].AbsolutePosition.Y + 90)
                 library:close_element(cfg)
             end
@@ -3564,7 +3563,7 @@
                 
                 library:create( "UIListLayout" , {
                     Parent = items[ "list" ];
-                    Padding = dim(0, self.is_mobile and 5 or 10);
+                    Padding = dim(0, self.is_mobile and 4 or 10);
                     SortOrder = Enum.SortOrder.LayoutOrder
                 });
                 
@@ -3575,12 +3574,12 @@
                 });
             end 
 
-            function cfg.refresh_options(options_to_refresh) -- ignore goofy parameter
+            function cfg.refresh_options(options_to_refresh)
                 for _,option in cfg.data_store do 
                     option:Destroy()
                 end
 
-                for _, option_data in options_to_refresh do -- haha u skids no next >_<
+                for _, option_data in options_to_refresh do
                     local button = library:create( "TextButton" , {
                         FontFace = fonts.small;
                         TextColor3 = rgb(0, 0, 0);
@@ -3591,9 +3590,9 @@
                         Parent = items[ "list" ];
                         Name = "\0";
                         Position = dim2(1, 0, 0, 0);
-                        Size = dim2(1, 0, 0, self.is_mobile and 26 or 30);
+                        Size = dim2(1, 0, 0, self.is_mobile and 22 or 30);
                         BorderSizePixel = 0;
-                        TextSize = self.is_mobile and 12 or 14;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(33, 33, 35)
                     }); cfg.data_store[#cfg.data_store + 1] = button;
 
@@ -3608,7 +3607,7 @@
                         Size = dim2(1, 0, 1, 0);
                         BorderSizePixel = 0;
                         AutomaticSize = Enum.AutomaticSize.XY;
-                        TextSize = self.is_mobile and 12 or 14;
+                        TextSize = self.is_mobile and 10 or 14;
                         BackgroundColor3 = rgb(255, 255, 255)
                     });
                     
@@ -3718,7 +3717,7 @@
             local items = cfg.items; do 
                 items[ "notification" ] = library:create( "Frame" , {
                     Parent = library[ "items" ];
-                    Size = dim2(0, self.is_mobile and 180 or 210, 0, self.is_mobile and 45 or 53);
+                    Size = dim2(0, self.is_mobile and 160 or 210, 0, self.is_mobile and 40 or 53);
                     Name = "\0";
                     BorderColor3 = rgb(0, 0, 0);
                     BorderSizePixel = 0;
@@ -3743,10 +3742,10 @@
                     Parent = items[ "notification" ];
                     Name = "\0";
                     BackgroundTransparency = 1;
-                    Position = dim2(0, 7, 0, 6);
+                    Position = dim2(0, 6, 0, 5);
                     BorderSizePixel = 0;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = self.is_mobile and 12 or 14;
+                    TextSize = self.is_mobile and 10 or 14;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
@@ -3762,18 +3761,18 @@
                     Text = cfg.info;
                     Parent = items[ "notification" ];
                     Name = "\0";
-                    Position = dim2(0, 9, 0, 22);
+                    Position = dim2(0, 8, 0, 20);
                     BorderSizePixel = 0;
                     BackgroundTransparency = 1;
                     TextXAlignment = Enum.TextXAlignment.Left;
                     TextWrapped = true;
                     AutomaticSize = Enum.AutomaticSize.XY;
-                    TextSize = self.is_mobile and 12 or 14;
+                    TextSize = self.is_mobile and 9 or 14;
                     BackgroundColor3 = rgb(255, 255, 255)
                 });
                 
                 library:create( "UIPadding" , {
-                    PaddingBottom = dim(0, 17);
+                    PaddingBottom = dim(0, 15);
                     PaddingRight = dim(0, 8);
                     Parent = items[ "info" ]
                 });
@@ -3784,7 +3783,7 @@
                     Name = "\0";
                     Position = dim2(0, 8, 1, -6);
                     BorderColor3 = rgb(0, 0, 0);
-                    Size = dim2(0, 0, 0, 5);
+                    Size = dim2(0, 0, 0, 4);
                     BackgroundTransparency = 1;
                     BorderSizePixel = 0;
                     BackgroundColor3 = themes.preset.accent
@@ -3811,7 +3810,7 @@
             items[ "notification" ].Position = dim_offset(20, offset)
 
             library:tween(items[ "notification" ], {AnchorPoint = vec2(0, 0)}, Enum.EasingStyle.Quad, 1)
-            library:tween(items[ "bar" ], {Size = dim2(1, -8, 0, 5)}, Enum.EasingStyle.Quad, cfg.lifetime)
+            library:tween(items[ "bar" ], {Size = dim2(1, -8, 0, 4)}, Enum.EasingStyle.Quad, cfg.lifetime)
 
             task.spawn(function()
                 task.wait(cfg.lifetime)
