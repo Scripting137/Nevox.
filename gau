@@ -1,0 +1,974 @@
+-- Monstrum UI Library
+-- Version: 1.0
+-- Documentation: https://github.com/monstrum-ui
+-- Created by: isimoil Boutarov
+
+local MonstrumUI = {}
+MonstrumUI.__index = MonstrumUI
+
+-- Services
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+-- Default Colors
+MonstrumUI.Colors = {
+    Primary = Color3.fromRGB(255, 93, 136),
+    Secondary = Color3.fromRGB(107, 33, 44),
+    Background = Color3.fromRGB(12, 12, 12),
+    Surface = Color3.fromRGB(44, 44, 44),
+    Text = Color3.fromRGB(255, 255, 255),
+    Disabled = Color3.fromRGB(54, 54, 54)
+}
+
+-- Create the main window
+function MonstrumUI.new(name, position, size)
+    local self = setmetatable({}, MonstrumUI)
+    
+    self.Name = name or "Monstrum UI"
+    self.Visible = true
+    self.ActiveTab = nil
+    self.Tabs = {}
+    self.Components = {}
+    
+    -- Create ScreenGui
+    self.ScreenGui = Instance.new("ScreenGui")
+    self.ScreenGui.Name = name
+    self.ScreenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+    self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    self.ScreenGui.ResetOnSpawn = false
+    
+    -- Create main frame
+    self.MainFrame = Instance.new("Frame")
+    self.MainFrame.Name = "MainFrame"
+    self.MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    self.MainFrame.BorderSizePixel = 0
+    self.MainFrame.Position = position or UDim2.new(0.266, 0, 0.278, 0)
+    self.MainFrame.Size = size or UDim2.new(0, 623, 0, 355)
+    self.MainFrame.Parent = self.ScreenGui
+    
+    local UIStroke = Instance.new("UIStroke")
+    UIStroke.Color = MonstrumUI.Colors.Secondary
+    UIStroke.Parent = self.MainFrame
+    
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 1)
+    UICorner.Parent = self.MainFrame
+    
+    -- Title bar
+    self.TitleFrame = Instance.new("Frame")
+    self.TitleFrame.Name = "TitleFrame"
+    self.TitleFrame.BackgroundTransparency = 1
+    self.TitleFrame.Size = UDim2.new(1, 0, 0, 30)
+    self.TitleFrame.Parent = self.MainFrame
+    
+    self.TitleLabel = Instance.new("TextLabel")
+    self.TitleLabel.Name = "TitleLabel"
+    self.TitleLabel.BackgroundTransparency = 1
+    self.TitleLabel.Position = UDim2.new(0.019, 0, 0, 0)
+    self.TitleLabel.Size = UDim2.new(0, 100, 1, 0)
+    self.TitleLabel.Font = Enum.Font.Cartoon
+    self.TitleLabel.Text = name
+    self.TitleLabel.TextColor3 = MonstrumUI.Colors.Text
+    self.TitleLabel.TextSize = 12
+    self.TitleLabel.Parent = self.TitleFrame
+    
+    local titleUnderline = Instance.new("Frame")
+    titleUnderline.Name = "Underline"
+    titleUnderline.BackgroundColor3 = MonstrumUI.Colors.Primary
+    titleUnderline.BorderSizePixel = 0
+    titleUnderline.Position = UDim2.new(0, 0, 0.85, 0)
+    titleUnderline.Size = UDim2.new(1, 0, 0.1, 0)
+    titleUnderline.Parent = self.TitleLabel
+    
+    -- Tab buttons container
+    self.TabButtonsFrame = Instance.new("Frame")
+    self.TabButtonsFrame.Name = "TabButtonsFrame"
+    self.TabButtonsFrame.BackgroundTransparency = 1
+    self.TabButtonsFrame.Position = UDim2.new(0.247, 0, 0, 0)
+    self.TabButtonsFrame.Size = UDim2.new(0, 300, 1, 0)
+    self.TabButtonsFrame.Parent = self.TitleFrame
+    
+    -- Tab content area
+    self.TabHolder = Instance.new("Frame")
+    self.TabHolder.Name = "TabHolder"
+    self.TabHolder.BackgroundColor3 = MonstrumUI.Colors.Background
+    self.TabHolder.BorderSizePixel = 0
+    self.TabHolder.Position = UDim2.new(0.019, 0, 0.104, 0)
+    self.TabHolder.Size = UDim2.new(0, 447, 0, 310)
+    self.TabHolder.Parent = self.MainFrame
+    
+    local tabStroke = Instance.new("UIStroke")
+    tabStroke.Color = MonstrumUI.Colors.Secondary
+    tabStroke.Parent = self.TabHolder
+    
+    local tabCorner = Instance.new("UICorner")
+    tabCorner.CornerRadius = UDim.new(0, 1)
+    tabCorner.Parent = self.TabHolder
+    
+    local tabGradient = Instance.new("UIGradient")
+    tabGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0.00, Color3.fromRGB(13, 13, 13)),
+        ColorSequenceKeypoint.new(0.44, Color3.fromRGB(13, 13, 13)),
+        ColorSequenceKeypoint.new(0.49, Color3.fromRGB(9, 9, 9)),
+        ColorSequenceKeypoint.new(0.68, Color3.fromRGB(13, 13, 13)),
+        ColorSequenceKeypoint.new(1.00, Color3.fromRGB(13, 13, 13))
+    }
+    tabGradient.Parent = self.TabHolder
+    
+    -- ESP Panel (right side)
+    self.EspPanel = Instance.new("Frame")
+    self.EspPanel.Name = "EspPanel"
+    self.EspPanel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    self.EspPanel.BorderSizePixel = 0
+    self.EspPanel.Position = UDim2.new(0.768, 0, 0.107, 0)
+    self.EspPanel.Size = UDim2.new(0, 144, 0, 279)
+    self.EspPanel.Parent = self.ScreenGui
+    
+    local espStroke = Instance.new("UIStroke")
+    espStroke.Color = Color3.fromRGB(213, 66, 86)
+    espStroke.Parent = self.EspPanel
+    
+    local espCorner = Instance.new("UICorner")
+    espCorner.CornerRadius = UDim.new(0, 1)
+    espCorner.Parent = self.EspPanel
+    
+    -- Player info in ESP panel
+    self.PlayerNameLabel = Instance.new("TextLabel")
+    self.PlayerNameLabel.Name = "PlayerNameLabel"
+    self.PlayerNameLabel.BackgroundTransparency = 1
+    self.PlayerNameLabel.Position = UDim2.new(0.069, 0, 0.029, 0)
+    self.PlayerNameLabel.Size = UDim2.new(0, 124, 0, 21)
+    self.PlayerNameLabel.Font = Enum.Font.Cartoon
+    self.PlayerNameLabel.Text = Players.LocalPlayer.Name
+    self.PlayerNameLabel.TextColor3 = MonstrumUI.Colors.Text
+    self.PlayerNameLabel.TextSize = 12
+    self.PlayerNameLabel.Parent = self.EspPanel
+    
+    local nameUnderline = Instance.new("Frame")
+    nameUnderline.BackgroundColor3 = MonstrumUI.Colors.Primary
+    nameUnderline.BorderSizePixel = 0
+    nameUnderline.Position = UDim2.new(0, 0, 0.85, 0)
+    nameUnderline.Size = UDim2.new(1, 0, 0.1, 0)
+    nameUnderline.Parent = self.PlayerNameLabel
+    
+    -- 3D Avatar Viewport
+    self.PlayerAvatarHolder = Instance.new("ViewportFrame")
+    self.PlayerAvatarHolder.Name = "PlayerAvatarHolder"
+    self.PlayerAvatarHolder.BackgroundTransparency = 1
+    self.PlayerAvatarHolder.Position = UDim2.new(0.153, 0, 0.129, 0)
+    self.PlayerAvatarHolder.Size = UDim2.new(0, 100, 0, 100)
+    self.PlayerAvatarHolder.Parent = self.EspPanel
+    
+    -- Setup 3D avatar
+    self:_setupAvatarViewport()
+    
+    -- Make window draggable
+    self:_makeDraggable()
+    
+    return self
+end
+
+-- Make the window draggable
+function MonstrumUI:_makeDraggable()
+    local dragging = false
+    local dragInput, dragStart, startPos
+    
+    self.TitleFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = self.MainFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    self.TitleFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            local delta = input.Position - dragStart
+            self.MainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+-- Setup 3D avatar viewport
+function MonstrumUI:_setupAvatarViewport()
+    local viewport = self.PlayerAvatarHolder
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    
+    viewport.Ambient = Color3.fromRGB(200, 200, 200)
+    viewport.LightDirection = Vector3.new(0, -1, 0)
+    
+    character.Archivable = true
+    local cloner = character:Clone()
+    cloner.Parent = viewport
+    
+    local camera = Instance.new("Camera")
+    viewport.CurrentCamera = camera
+    camera.Parent = viewport
+    
+    local rootPart = cloner:WaitForChild("HumanoidRootPart")
+    local distance = 6
+    local angle = 0
+    local dragging = false
+    local lastMousePos
+    
+    local function updateCamera()
+        if rootPart then
+            local center = rootPart.Position
+            local offset = Vector3.new(math.sin(angle) * distance, 1.5, math.cos(angle) * distance)
+            camera.CFrame = CFrame.new(center + offset, center)
+        end
+    end
+    
+    updateCamera()
+    
+    viewport.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            lastMousePos = input.Position
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - lastMousePos
+            angle = angle + (delta.X * 0.01)
+            lastMousePos = input.Position
+            updateCamera()
+        end
+    end)
+    
+    -- Update when character changes
+    player.CharacterAdded:Connect(function(newChar)
+        character = newChar
+        wait(1) -- Wait for character to load
+        
+        character.Archivable = true
+        cloner:ClearAllChildren()
+        
+        local newCloner = character:Clone()
+        newCloner.Parent = viewport
+        
+        rootPart = newCloner:WaitForChild("HumanoidRootPart")
+        updateCamera()
+    end)
+end
+
+-- Create a new tab
+function MonstrumUI:CreateTab(name)
+    local tab = {}
+    tab.Name = name
+    tab.Visible = false
+    tab.Components = {}
+    
+    -- Create tab button
+    local tabButton = Instance.new("TextButton")
+    tabButton.Name = name .. "Tab"
+    tabButton.BackgroundTransparency = 1
+    tabButton.Size = UDim2.new(0, 70, 1, 0)
+    tabButton.Font = Enum.Font.Cartoon
+    tabButton.Text = name
+    tabButton.TextColor3 = MonstrumUI.Colors.Text
+    tabButton.TextSize = 12
+    tabButton.Parent = self.TabButtonsFrame
+    
+    -- Position tab button
+    local tabCount = #self.Tabs
+    tabButton.Position = UDim2.new(0, (tabCount * 75), 0, 0)
+    
+    -- Create tab content frame
+    tab.Frame = Instance.new("Frame")
+    tab.Frame.Name = name .. "Content"
+    tab.Frame.BackgroundTransparency = 1
+    tab.Frame.Size = UDim2.new(1, 0, 1, 0)
+    tab.Frame.Visible = false
+    tab.Frame.Parent = self.TabHolder
+    
+    local tabUnderline = Instance.new("Frame")
+    tabUnderline.Name = "Underline"
+    tabUnderline.BackgroundColor3 = Color3.fromRGB(157, 57, 84)
+    tabUnderline.BorderSizePixel = 0
+    tabUnderline.Position = UDim2.new(0, 0, 0.85, 0)
+    tabUnderline.Size = UDim2.new(1, 0, 0.1, 0)
+    tabUnderline.Parent = tabButton
+    
+    -- Tab button click event
+    tabButton.MouseButton1Click:Connect(function()
+        self:SwitchTab(name)
+    end)
+    
+    table.insert(self.Tabs, tab)
+    
+    -- If this is the first tab, make it active
+    if #self.Tabs == 1 then
+        self:SwitchTab(name)
+    end
+    
+    return tab
+end
+
+-- Switch to a tab
+function MonstrumUI:SwitchTab(tabName)
+    for _, tab in pairs(self.Tabs) do
+        if tab.Frame then
+            tab.Frame.Visible = (tab.Name == tabName)
+        end
+        -- Update tab button appearance
+        local tabButton = self.TabButtonsFrame:FindFirstChild(tab.Name .. "Tab")
+        if tabButton then
+            local underline = tabButton:FindFirstChild("Underline")
+            if underline then
+                if tab.Name == tabName then
+                    underline.BackgroundColor3 = MonstrumUI.Colors.Primary
+                    tabButton.TextColor3 = MonstrumUI.Colors.Primary
+                else
+                    underline.BackgroundColor3 = Color3.fromRGB(157, 57, 84)
+                    tabButton.TextColor3 = MonstrumUI.Colors.Text
+                end
+            end
+        end
+    end
+    self.ActiveTab = tabName
+end
+
+-- Add a label
+function MonstrumUI:CreateLabel(tabName, text, position, size)
+    local tab = self:GetTab(tabName)
+    if not tab then return end
+    
+    local label = Instance.new("TextLabel")
+    label.Name = "Label_" .. text
+    label.BackgroundTransparency = 1
+    label.Position = position or UDim2.new(0.02, 0, 0.05, 0)
+    label.Size = size or UDim2.new(0.96, 0, 0, 20)
+    label.Font = Enum.Font.Cartoon
+    label.Text = text
+    label.TextColor3 = MonstrumUI.Colors.Text
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = tab.Frame
+    
+    table.insert(tab.Components, label)
+    return label
+end
+
+-- Add a separator
+function MonstrumUI:CreateSeparator(tabName, text, position)
+    local tab = self:GetTab(tabName)
+    if not tab then return end
+    
+    local container = Instance.new("Frame")
+    container.Name = "Separator_" .. (text or "Separator")
+    container.BackgroundTransparency = 1
+    container.Position = position or UDim2.new(0.02, 0, 0.08, 0)
+    container.Size = UDim2.new(0.96, 0, 0, 20)
+    container.Parent = tab.Frame
+    
+    local line = Instance.new("Frame")
+    line.Name = "Line"
+    line.BackgroundColor3 = MonstrumUI.Colors.Primary
+    line.BorderSizePixel = 0
+    line.Position = UDim2.new(0, 0, 0.5, 0)
+    line.Size = UDim2.new(1, 0, 0, 1)
+    line.Parent = container
+    
+    if text then
+        local label = Instance.new("TextLabel")
+        label.Name = "Text"
+        label.BackgroundTransparency = 1
+        label.Position = UDim2.new(0, 0, 0, -5)
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.Font = Enum.Font.Cartoon
+        label.Text = text
+        label.TextColor3 = MonstrumUI.Colors.Text
+        label.TextSize = 12
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = container
+    end
+    
+    table.insert(tab.Components, container)
+    return container
+end
+
+-- Add a toggle button
+function MonstrumUI:CreateToggle(tabName, text, defaultValue, callback, position)
+    local tab = self:GetTab(tabName)
+    if not tab then return end
+    
+    local toggle = {}
+    toggle.Value = defaultValue or false
+    toggle.Callback = callback
+    
+    local container = Instance.new("Frame")
+    container.Name = "Toggle_" .. text
+    container.BackgroundTransparency = 1
+    container.Position = position or UDim2.new(0.02, 0, 0.12, 0)
+    container.Size = UDim2.new(0.96, 0, 0, 21)
+    container.Parent = tab.Frame
+    
+    local toggleBox = Instance.new("Frame")
+    toggleBox.Name = "ToggleBox"
+    toggleBox.BackgroundColor3 = toggle.Value and MonstrumUI.Colors.Primary or MonstrumUI.Colors.Disabled
+    toggleBox.BorderSizePixel = 0
+    toggleBox.Position = UDim2.new(0, 0, 0, 2)
+    toggleBox.Size = UDim2.new(0, 17, 0, 17)
+    toggleBox.Parent = container
+    
+    local boxCorner = Instance.new("UICorner")
+    boxCorner.CornerRadius = UDim.new(0, 5)
+    boxCorner.Parent = toggleBox
+    
+    local label = Instance.new("TextLabel")
+    label.Name = "Label"
+    label.BackgroundTransparency = 1
+    label.Position = UDim2.new(0, 26, 0, 0)
+    label.Size = UDim2.new(1, -26, 1, 0)
+    label.Font = Enum.Font.Cartoon
+    label.Text = text
+    label.TextColor3 = MonstrumUI.Colors.Text
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+    
+    local function updateVisual()
+        toggleBox.BackgroundColor3 = toggle.Value and MonstrumUI.Colors.Primary or MonstrumUI.Colors.Disabled
+        if toggle.Callback then
+            toggle.Callback(toggle.Value)
+        end
+    end
+    
+    local function toggleValue()
+        toggle.Value = not toggle.Value
+        updateVisual()
+    end
+    
+    container.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            toggleValue()
+        end
+    end)
+    
+    toggleBox.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            toggleValue()
+        end
+    end)
+    
+    label.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            toggleValue()
+        end
+    end)
+    
+    updateVisual()
+    
+    toggle.Container = container
+    toggle.Set = function(value)
+        toggle.Value = value
+        updateVisual()
+    end
+    
+    table.insert(tab.Components, container)
+    return toggle
+end
+
+-- Add a button
+function MonstrumUI:CreateButton(tabName, text, callback, position)
+    local tab = self:GetTab(tabName)
+    if not tab then return end
+    
+    local button = Instance.new("Frame")
+    button.Name = "Button_" .. text
+    button.BackgroundColor3 = MonstrumUI.Colors.Surface
+    button.BorderSizePixel = 0
+    button.Position = position or UDim2.new(0.02, 0, 0.18, 0)
+    button.Size = UDim2.new(0.96, 0, 0, 21)
+    button.Parent = tab.Frame
+    
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 4)
+    buttonCorner.Parent = button
+    
+    local label = Instance.new("TextLabel")
+    label.Name = "Label"
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Font = Enum.Font.Cartoon
+    label.Text = text
+    label.TextColor3 = MonstrumUI.Colors.Text
+    label.TextSize = 12
+    label.Parent = button
+    
+    -- Hover effect
+    local originalColor = button.BackgroundColor3
+    local hoverColor = Color3.fromRGB(56, 56, 56)
+    
+    button.MouseEnter:Connect(function()
+        button.BackgroundColor3 = hoverColor
+    end)
+    
+    button.MouseLeave:Connect(function()
+        button.BackgroundColor3 = originalColor
+    end)
+    
+    button.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            if callback then
+                callback()
+            end
+        end
+    end)
+    
+    table.insert(tab.Components, button)
+    return button
+end
+
+-- Add a slider
+function MonstrumUI:CreateSlider(tabName, text, minValue, maxValue, defaultValue, callback, position)
+    local tab = self:GetTab(tabName)
+    if not tab then return end
+    
+    local slider = {}
+    slider.Value = defaultValue or minValue
+    slider.Min = minValue or 0
+    slider.Max = maxValue or 100
+    slider.Callback = callback
+    
+    local container = Instance.new("Frame")
+    container.Name = "Slider_" .. text
+    container.BackgroundTransparency = 1
+    container.Position = position or UDim2.new(0.02, 0, 0.25, 0)
+    container.Size = UDim2.new(0.96, 0, 0, 40)
+    container.Parent = tab.Frame
+    
+    local label = Instance.new("TextLabel")
+    label.Name = "Label"
+    label.BackgroundTransparency = 1
+    label.Position = UDim2.new(0, 0, 0, 0)
+    label.Size = UDim2.new(1, 0, 0, 15)
+    label.Font = Enum.Font.Cartoon
+    label.Text = text .. ": " .. slider.Value
+    label.TextColor3 = MonstrumUI.Colors.Text
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+    
+    local sliderTrack = Instance.new("Frame")
+    sliderTrack.Name = "Track"
+    sliderTrack.BackgroundColor3 = MonstrumUI.Colors.Surface
+    sliderTrack.BorderSizePixel = 0
+    sliderTrack.Position = UDim2.new(0, 0, 0.5, 0)
+    sliderTrack.Size = UDim2.new(1, 0, 0, 14)
+    sliderTrack.Parent = container
+    
+    local trackCorner = Instance.new("UICorner")
+    trackCorner.CornerRadius = UDim.new(0, 6)
+    trackCorner.Parent = sliderTrack
+    
+    local sliderFill = Instance.new("Frame")
+    sliderFill.Name = "Fill"
+    sliderFill.BackgroundColor3 = MonstrumUI.Colors.Primary
+    sliderFill.BorderSizePixel = 0
+    sliderFill.Size = UDim2.new((slider.Value - slider.Min) / (slider.Max - slider.Min), 0, 1, 0)
+    sliderFill.Parent = sliderTrack
+    
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.Parent = sliderFill
+    
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Name = "Value"
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Size = UDim2.new(1, 0, 1, 0)
+    valueLabel.Font = Enum.Font.Cartoon
+    valueLabel.Text = tostring(math.floor(slider.Value)) .. "/" .. tostring(slider.Max)
+    valueLabel.TextColor3 = MonstrumUI.Colors.Text
+    valueLabel.TextSize = 12
+    valueLabel.Parent = sliderTrack
+    
+    local function updateSlider()
+        local percentage = (slider.Value - slider.Min) / (slider.Max - slider.Min)
+        sliderFill.Size = UDim2.new(percentage, 0, 1, 0)
+        label.Text = text .. ": " .. math.floor(slider.Value)
+        valueLabel.Text = tostring(math.floor(slider.Value)) .. "/" .. tostring(slider.Max)
+        
+        if slider.Callback then
+            slider.Callback(slider.Value)
+        end
+    end
+    
+    local function setValueFromMouse()
+        local mouse = Players.LocalPlayer:GetMouse()
+        local trackAbsolutePosition = sliderTrack.AbsolutePosition.X
+        local trackAbsoluteSize = sliderTrack.AbsoluteSize.X
+        
+        local mouseX = math.clamp(mouse.X, trackAbsolutePosition, trackAbsolutePosition + trackAbsoluteSize)
+        local percentage = (mouseX - trackAbsolutePosition) / trackAbsoluteSize
+        
+        slider.Value = math.floor(slider.Min + (slider.Max - slider.Min) * percentage)
+        updateSlider()
+    end
+    
+    sliderTrack.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            setValueFromMouse()
+            
+            local connection
+            connection = UserInputService.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement then
+                    setValueFromMouse()
+                end
+            end)
+            
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    connection:Disconnect()
+                end
+            end)
+        end
+    end)
+    
+    updateSlider()
+    
+    slider.Container = container
+    slider.Set = function(value)
+        slider.Value = math.clamp(value, slider.Min, slider.Max)
+        updateSlider()
+    end
+    
+    table.insert(tab.Components, container)
+    return slider
+end
+
+-- Add a textbox
+function MonstrumUI:CreateTextbox(tabName, text, placeholder, callback, position)
+    local tab = self:GetTab(tabName)
+    if not tab then return end
+    
+    local container = Instance.new("Frame")
+    container.Name = "Textbox_" .. text
+    container.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
+    container.BorderSizePixel = 0
+    container.Position = position or UDim2.new(0.02, 0, 0.35, 0)
+    container.Size = UDim2.new(0.96, 0, 0, 21)
+    container.Parent = tab.Frame
+    
+    local boxCorner = Instance.new("UICorner")
+    boxCorner.CornerRadius = UDim.new(0, 4)
+    boxCorner.Parent = container
+    
+    local label = Instance.new("TextLabel")
+    label.Name = "Label"
+    label.BackgroundTransparency = 1
+    label.Position = UDim2.new(0.02, 0, 0, -25)
+    label.Size = UDim2.new(0.6, 0, 0, 20)
+    label.Font = Enum.Font.Cartoon
+    label.Text = text
+    label.TextColor3 = MonstrumUI.Colors.Text
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+    
+    local textBox = Instance.new("TextBox")
+    textBox.Name = "Input"
+    textBox.BackgroundTransparency = 1
+    textBox.Position = UDim2.new(0.02, 0, 0, 0)
+    textBox.Size = UDim2.new(0.96, 0, 1, 0)
+    textBox.Font = Enum.Font.Cartoon
+    textBox.PlaceholderText = placeholder or "Type here..."
+    textBox.PlaceholderColor3 = Color3.fromRGB(154, 154, 154)
+    textBox.Text = ""
+    textBox.TextColor3 = MonstrumUI.Colors.Text
+    textBox.TextSize = 12
+    textBox.TextXAlignment = Enum.TextXAlignment.Left
+    textBox.Parent = container
+    
+    textBox.Focused:Connect(function()
+        container.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    end)
+    
+    textBox.FocusLost:Connect(function(enterPressed)
+        container.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
+        if callback and enterPressed then
+            callback(textBox.Text)
+        end
+    end)
+    
+    table.insert(tab.Components, container)
+    return container
+end
+
+-- Add a dropdown
+function MonstrumUI:CreateDropdown(tabName, text, options, defaultIndex, callback, position)
+    local tab = self:GetTab(tabName)
+    if not tab then return end
+    
+    local dropdown = {}
+    dropdown.Options = options or {}
+    dropdown.Selected = defaultIndex or 1
+    dropdown.Callback = callback
+    dropdown.Open = false
+    
+    local container = Instance.new("Frame")
+    container.Name = "Dropdown_" .. text
+    container.BackgroundColor3 = MonstrumUI.Colors.Surface
+    container.BorderSizePixel = 0
+    container.Position = position or UDim2.new(0.02, 0, 0.42, 0)
+    container.Size = UDim2.new(0.96, 0, 0, 21)
+    container.ClipsDescendants = true
+    container.Parent = tab.Frame
+    
+    local boxCorner = Instance.new("UICorner")
+    boxCorner.CornerRadius = UDim.new(0, 4)
+    boxCorner.Parent = container
+    
+    local label = Instance.new("TextLabel")
+    label.Name = "Label"
+    label.BackgroundTransparency = 1
+    label.Position = UDim2.new(0.02, 0, 0, -25)
+    label.Size = UDim2.new(0.6, 0, 0, 20)
+    label.Font = Enum.Font.Cartoon
+    label.Text = text
+    label.TextColor3 = MonstrumUI.Colors.Text
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
+    
+    local selectedLabel = Instance.new("TextLabel")
+    selectedLabel.Name = "Selected"
+    selectedLabel.BackgroundTransparency = 1
+    selectedLabel.Position = UDim2.new(0.02, 0, 0, 0)
+    selectedLabel.Size = UDim2.new(0.8, 0, 1, 0)
+    selectedLabel.Font = Enum.Font.Cartoon
+    selectedLabel.Text = options[dropdown.Selected] or "Select..."
+    selectedLabel.TextColor3 = MonstrumUI.Colors.Text
+    selectedLabel.TextSize = 12
+    selectedLabel.TextXAlignment = Enum.TextXAlignment.Left
+    selectedLabel.Parent = container
+    
+    local arrow = Instance.new("ImageLabel")
+    arrow.Name = "Arrow"
+    arrow.BackgroundTransparency = 1
+    arrow.Position = UDim2.new(0.9, 0, 0.1, 0)
+    arrow.Size = UDim2.new(0, 17, 0, 17)
+    arrow.Image = "rbxassetid://127180295882508"
+    arrow.Parent = container
+    
+    local optionsFrame = Instance.new("Frame")
+    optionsFrame.Name = "Options"
+    optionsFrame.BackgroundColor3 = MonstrumUI.Colors.Surface
+    optionsFrame.BorderSizePixel = 0
+    optionsFrame.Position = UDim2.new(0, 0, 1, 2)
+    optionsFrame.Size = UDim2.new(1, 0, 0, 0)
+    optionsFrame.Visible = false
+    optionsFrame.Parent = container
+    
+    local optionsCorner = Instance.new("UICorner")
+    optionsCorner.CornerRadius = UDim.new(0, 4)
+    optionsCorner.Parent = optionsFrame
+    
+    local function toggleDropdown()
+        dropdown.Open = not dropdown.Open
+        
+        if dropdown.Open then
+            container.Size = UDim2.new(0.96, 0, 0, 21 + (#options * 21))
+            optionsFrame.Size = UDim2.new(1, 0, 0, #options * 21)
+            optionsFrame.Visible = true
+        else
+            container.Size = UDim2.new(0.96, 0, 0, 21)
+            optionsFrame.Size = UDim2.new(1, 0, 0, 0)
+            optionsFrame.Visible = false
+        end
+    end
+    
+    local function selectOption(index)
+        dropdown.Selected = index
+        selectedLabel.Text = options[index]
+        toggleDropdown()
+        
+        if dropdown.Callback then
+            dropdown.Callback(options[index], index)
+        end
+    end
+    
+    -- Create option buttons
+    for i, option in ipairs(options) do
+        local optionButton = Instance.new("TextButton")
+        optionButton.Name = "Option_" .. i
+        optionButton.BackgroundColor3 = MonstrumUI.Colors.Surface
+        optionButton.BorderSizePixel = 0
+        optionButton.Position = UDim2.new(0, 0, 0, (i-1) * 21)
+        optionButton.Size = UDim2.new(1, 0, 0, 21)
+        optionButton.Font = Enum.Font.Cartoon
+        optionButton.Text = option
+        optionButton.TextColor3 = MonstrumUI.Colors.Text
+        optionButton.TextSize = 12
+        optionButton.TextXAlignment = Enum.TextXAlignment.Left
+        optionButton.Parent = optionsFrame
+        
+        optionButton.MouseButton1Click:Connect(function()
+            selectOption(i)
+        end)
+        
+        -- Hover effect
+        optionButton.MouseEnter:Connect(function()
+            optionButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        end)
+        
+        optionButton.MouseLeave:Connect(function()
+            optionButton.BackgroundColor3 = MonstrumUI.Colors.Surface
+        end)
+    end
+    
+    container.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            toggleDropdown()
+        end
+    end)
+    
+    dropdown.Container = container
+    dropdown.Set = function(index)
+        if index >= 1 and index <= #options then
+            selectOption(index)
+        end
+    end
+    
+    table.insert(tab.Components, container)
+    return dropdown
+end
+
+-- Helper function to get tab by name
+function MonstrumUI:GetTab(tabName)
+    for _, tab in pairs(self.Tabs) do
+        if tab.Name == tabName then
+            return tab
+        end
+    end
+    return nil
+end
+
+-- Toggle UI visibility
+function MonstrumUI:Toggle()
+    self.Visible = not self.Visible
+    self.ScreenGui.Enabled = self.Visible
+end
+
+-- Hide UI
+function MonstrumUI:Hide()
+    self.Visible = false
+    self.ScreenGui.Enabled = false
+end
+
+-- Show UI
+function MonstrumUI:Show()
+    self.Visible = true
+    self.ScreenGui.Enabled = true
+end
+
+-- Destroy UI
+function MonstrumUI:Destroy()
+    self.ScreenGui:Destroy()
+end
+
+-- Usage Example (auto-executes on start)
+if not _G.MonstrumUILoaded then
+    _G.MonstrumUILoaded = true
+    
+    -- Create UI instance
+    local UI = MonstrumUI.new("Monstrum UI", UDim2.new(0.266, 0, 0.278, 0), UDim2.new(0, 623, 0, 355))
+    
+    -- Create tabs
+    local combatTab = UI:CreateTab("Combat")
+    local visualTab = UI:CreateTab("Visual")
+    local miscTab = UI:CreateTab("Misc")
+    
+    -- Combat Tab
+    UI:CreateSeparator("Combat", "Aimbot")
+    UI:CreateToggle("Combat", "Enable Aimbot", false, function(value)
+        print("Aimbot:", value)
+    end, UDim2.new(0.02, 0, 0.1, 0))
+    
+    UI:CreateToggle("Combat", "Silent Aim", false, function(value)
+        print("Silent Aim:", value)
+    end, UDim2.new(0.02, 0, 0.16, 0))
+    
+    UI:CreateSlider("Combat", "Field of View", 10, 360, 90, function(value)
+        print("FOV:", value)
+    end, UDim2.new(0.02, 0, 0.25, 0))
+    
+    -- Visual Tab
+    UI:CreateSeparator("Visual", "ESP")
+    UI:CreateToggle("Visual", "Player ESP", true, function(value)
+        print("Player ESP:", value)
+    end, UDim2.new(0.02, 0, 0.1, 0))
+    
+    UI:CreateToggle("Visual", "Box ESP", true, function(value)
+        print("Box ESP:", value)
+    end, UDim2.new(0.02, 0, 0.16, 0))
+    
+    UI:CreateToggle("Visual", "Tracer ESP", false, function(value)
+        print("Tracer ESP:", value)
+    end, UDim2.new(0.02, 0, 0.22, 0))
+    
+    UI:CreateDropdown("Visual", "ESP Color", {"Red", "Green", "Blue", "White", "Rainbow"}, 1, function(option, index)
+        print("ESP Color:", option, index)
+    end, UDim2.new(0.02, 0, 0.32, 0))
+    
+    -- Misc Tab
+    UI:CreateSeparator("Misc", "Settings")
+    UI:CreateToggle("Misc", "Fly", false, function(value)
+        print("Fly:", value)
+    end, UDim2.new(0.02, 0, 0.1, 0))
+    
+    UI:CreateButton("Misc", "Teleport to Base", function()
+        print("Teleported to base!")
+    end, UDim2.new(0.02, 0, 0.18, 0))
+    
+    UI:CreateTextbox("Misc", "WalkSpeed", "Enter speed...", function(text)
+        local speed = tonumber(text)
+        if speed then
+            print("WalkSpeed set to:", speed)
+        end
+    end, UDim2.new(0.02, 0, 0.28, 0))
+    
+    UI:CreateButton("Misc", "Destroy UI", function()
+        UI:Destroy()
+    end, UDim2.new(0.02, 0, 0.38, 0))
+    
+    -- Add keybind to toggle UI (Right Shift)
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
+            UI:Toggle()
+        end
+    end)
+    
+    -- Print success message
+    print("Monstrum UI Library Loaded Successfully!")
+    print("Press Right Shift to toggle the UI")
+end
+
+return MonstrumUI
